@@ -1,0 +1,22 @@
+20 mini jeux pour la biche : 
+
+- le voyage en helicobiche (prendre l'helico et l'amener d'un point A à un point B) => prendre un fond type dessin en jour et nuit avec l'heliport et Vicherey et déplacer un hélico de png dedans avec la souris. Il faut setup Vicherey comme point d'arriver. 
+- gratter fizz (de haut en bas) => photo de fizz à ajouter avec une zone sur son ventre qui lui permet de se faire gratter. Quand on réussi on lui met un faux sourire sur lui et des petites étoiles autour
+- les aires du cerveau (frotter une partie en particulier) => prendre une photo du dessus de la tête de Mattéa. la partager en 4 et assigner aléatoirement un endroit où il faut gratter. Quand c'est ok, on entends un ronflement
+- faire tourner la petite mèche (faire tourner) => récupérer une photo de mattéa en train de se tourner la petite mèche et trouver un moyen de la faire tourner
+- faire courir la biche (alterner a et n en spam clic) => récupérer un png de la discobiche, et une piste de course. Quand on tape sur a ou n ça fait avancer la biche. 
+- faire l'ours (ne rien faire, ne rien toucher) => image d'un ours devant un ordi avec des choses différentes sur l'ordi
+- faire son café avec un piston (pousser le piston vers le bas mais avec une limite pour ne pas que ça déborde) => Prendre un png de cafetière avec le piston, et pousser le piston vers le bas. Coder une limite qui est variable selon la taille de la cafetière. 
+- faire une liste (tirer des traits droits sur un papier par rapport à un modèle) => Prendre un png dessin d'une feuille de papier avec un modèle qui peut varier. Tirer un trait avec la souris. 
+- faire du piano (donner un faux piano roll et faire jouer une note en particulier) => Trouver un png de warioware et trouver un moyen de faire une animation et donner un son. Il faut que la note soit celle qui est demandé d'être jouée
+- ranger les couverts (mettre 3 couverts et les faire glisser avec la souris). Prendre des png de chaque couvert avec un tiroir ouvert où y'a des couverts placés à placer avec la souris. 
+- trouver l'ours (mettre une tête d'ours parmi de plus en plus de distracteur qui lui ressemble de plus en plus). créer des png variantes de l'emoji ours. Les placer sur un fond noir. S'inspirer du mini jeu de super mario bros. 
+- conduire le kangoo (vue du dessus) => Prendre un png représentatif du kangoo avec une 3 voies sur l'autoroute où on doit esquiver des trucs. Si y'a un choc, on met un png d'explosion. 
+- raconte ta journée à l'ours (raconter un truc avec le micro allumé) => Mettre en place l'utilisation du micro et raconter n'importe quoi. je ne sais pas trop comment on met le trigger pour réussir.
+- faire un lego (empiler les pièces dans le bon ordre) => Mettre des png de lego qu'il faut remettre en place à partir d'un modèle.
+- arroser une plante (c'est un tournesol qui sort) => Prendre un png d'arrosoir et de pot et quand on l'arrose, y'a une plante qui sort qui se transforme en tournesol 
+- masser les pieds (spam clic sur la partie haute du pied) => prendre un png en dessin de pied et mettre un point rouge où on doit cliquer 20 fois dessus. 
+- appeler un serveur à l'entrecote (il passe rapidement, c'est du reflexe) => il ne se passe rien et au moins une seconde après le début du mini jeu, y'a un png de serveur qui apparaît une seconde. 
+- faire la routine (appliquer un produit sur une zone spéciale) => Prendre un png dessin de visage de fille, en mode biche. Prendre un png dessin d'applicateur de goutte qui lache une goutte quand on clique sur 3 personnes. 
+- faire un rototo (déplacer le perso pour tuer tous les ennemis) => repliquer brotato pour tuer 3 à 5 aliens. 
+- disco alien => Capture une vache qui cours super vite => prendre un png de pré et faire une alerte avec un objet qui peut être une vache ou non, quand on touche l'objet ça le capture avec une soucoupe 
