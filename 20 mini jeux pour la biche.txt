@@ -1,22 +1,35 @@
 20 mini jeux pour la biche : 
 
-- le voyage en helicobiche (prendre l'helico et l'amener d'un point A à un point B) => prendre un fond type dessin en jour et nuit avec l'heliport et Vicherey et déplacer un hélico de png dedans avec la souris. Il faut setup Vicherey comme point d'arriver. 
-- gratter fizz (de haut en bas) => photo de fizz à ajouter avec une zone sur son ventre qui lui permet de se faire gratter. Quand on réussi on lui met un faux sourire sur lui et des petites étoiles autour
-- les aires du cerveau (frotter une partie en particulier) => prendre une photo du dessus de la tête de Mattéa. la partager en 4 et assigner aléatoirement un endroit où il faut gratter. Quand c'est ok, on entends un ronflement
-- faire tourner la petite mèche (faire tourner) => récupérer une photo de mattéa en train de se tourner la petite mèche et trouver un moyen de la faire tourner
-- faire courir la biche (alterner a et n en spam clic) => récupérer un png de la discobiche, et une piste de course. Quand on tape sur a ou n ça fait avancer la biche. 
-- faire l'ours (ne rien faire, ne rien toucher) => image d'un ours devant un ordi avec des choses différentes sur l'ordi
-- faire son café avec un piston (pousser le piston vers le bas mais avec une limite pour ne pas que ça déborde) => Prendre un png de cafetière avec le piston, et pousser le piston vers le bas. Coder une limite qui est variable selon la taille de la cafetière. 
-- faire une liste (tirer des traits droits sur un papier par rapport à un modèle) => Prendre un png dessin d'une feuille de papier avec un modèle qui peut varier. Tirer un trait avec la souris. 
-- faire du piano (donner un faux piano roll et faire jouer une note en particulier) => Trouver un png de warioware et trouver un moyen de faire une animation et donner un son. Il faut que la note soit celle qui est demandé d'être jouée
-- ranger les couverts (mettre 3 couverts et les faire glisser avec la souris). Prendre des png de chaque couvert avec un tiroir ouvert où y'a des couverts placés à placer avec la souris. 
-- trouver l'ours (mettre une tête d'ours parmi de plus en plus de distracteur qui lui ressemble de plus en plus). créer des png variantes de l'emoji ours. Les placer sur un fond noir. S'inspirer du mini jeu de super mario bros. 
-- conduire le kangoo (vue du dessus) => Prendre un png représentatif du kangoo avec une 3 voies sur l'autoroute où on doit esquiver des trucs. Si y'a un choc, on met un png d'explosion. 
-- raconte ta journée à l'ours (raconter un truc avec le micro allumé) => Mettre en place l'utilisation du micro et raconter n'importe quoi. je ne sais pas trop comment on met le trigger pour réussir.
-- faire un lego (empiler les pièces dans le bon ordre) => Mettre des png de lego qu'il faut remettre en place à partir d'un modèle.
-- arroser une plante (c'est un tournesol qui sort) => Prendre un png d'arrosoir et de pot et quand on l'arrose, y'a une plante qui sort qui se transforme en tournesol 
-- masser les pieds (spam clic sur la partie haute du pied) => prendre un png en dessin de pied et mettre un point rouge où on doit cliquer 20 fois dessus. 
-- appeler un serveur à l'entrecote (il passe rapidement, c'est du reflexe) => il ne se passe rien et au moins une seconde après le début du mini jeu, y'a un png de serveur qui apparaît une seconde. 
-- faire la routine (appliquer un produit sur une zone spéciale) => Prendre un png dessin de visage de fille, en mode biche. Prendre un png dessin d'applicateur de goutte qui lache une goutte quand on clique sur 3 personnes. 
-- faire un rototo (déplacer le perso pour tuer tous les ennemis) => repliquer brotato pour tuer 3 à 5 aliens. 
-- disco alien => Capture une vache qui cours super vite => prendre un png de pré et faire une alerte avec un objet qui peut être une vache ou non, quand on touche l'objet ça le capture avec une soucoupe 
+- le voyage en helicobiche : prendre l'helico et l'amener d'un point A à un point B. Gagné quand on attend le point B (la petite maison sur la droite). Le point A c'est l'heliport à gauche => Dossier "voyager en helicobiche pour les assets
+
+- gratter fizz : de haut en bas ; Quand on réussi on lui met un faux sourire sur lui et des petites étoiles autour. Fizz c'est le chien dans le dossier. Dossier "Gratte_chien". 
+
+- faire pousser un tournesol : prendre l'arosoir et le verser sur le pot pour en faire sortir le tournesol quand il a été assez arrosé. Le temps d'arrosage est de deux secondes avant de faire pousser le tournsol (swap d'image). Dossier => Tournesol
+
+- les aires du cerveau : frotter une partie en particulier sur la photo => la partager en 4 équitablement et assigner aléatoirement un endroit où il faut gratter. Il faut découper la photo en 4 et mettre un filtre rouge là il faut gratter. C'est gagné quand on gratte une seconde au bon endroit. Quand c'est ok, on entends un ronflement. Dossier "4_aires". 
+
+- faire courir la biche => alterner a et n en spam clic, Quand on tape sur clic gauche puis clic droite à la suite ça fait avancer la biche. On doit arriver à la fin avant la fin du chrono. Attention, il faut réduire la taille du png de biche pour que ça fit sur le terrain de course. Il faut placer le png de biche sur le milieu de la piste de course et il faut placer une position de départ et d'arrivée qui sera toujours la même (la position de départ se fait sur la piste tout à gauche et la position d'arrivée se fait sur la piste tout à droite). Dossier => Course
+
+
+- faire l'ours => ne rien faire, ne rien toucher. Dossier => Bear_Time
+
+- faire une liste => tirer des traits droits sur un papier par rapport à un modèle, Tirer un trait avec la souris. Il faut que les traits soient dans n'importe quel ordre et il ne faut pas trop dépasser. Ca doit se faire avant la fin du temps. Dossier => "Liste"
+
+- faire du piano => donner un faux piano roll et faire jouer une note en particulier. Il faut que la note soit celle qui est demandé d'être jouée. Pas d'indice visuel. Il faut segmenter le png de piano de sorte à ce qu'on puisse jouer dessus la vraie note d'un piano qui est figuré dessus. Dossier => Piano
+
+- ranger les couverts (mettre 3 couverts et les faire glisser avec la souris). Segmenter le tiroir de sorte à ce qu'on lui attribue un couvert en particulier qui est stable à chaque fois puis faire en sorte qu'on puisse déplacer le couvert adéquat dans la bonne zone. les couverts seront présentés sous le tiroir. Il faut un check. Le mini jeu est réussi quand les 3 couverts sont à la bonne place. => Dossier "couverts". 
+ 
+- trouver l'ours : mettre une tête d'ours parmi de plus en plus de distracteur qui lui ressemble de plus en plus. Les placer sur un fond noir. Si c'est un distracteur : écouché. Si c'est la bonne réponse réussi (bonne réponse : ours_emo.png). Il faut cliquer dessus pour le trouver. Inspiré du mini jeu wanted de super mario 64 ds. Dossier "Find_Bear". 
+
+
+- raconte ta journée à l'ours : raconter un truc avec le micro allumé => Mettre en place l'utilisation du micro et raconter n'importe quoi. je ne sais pas trop comment on met le trigger pour réussir. Quand la personne parle il faut alterner les deux images avec l'ours pour qu'on ai l'impression que quelqu'un écoute. Dossier "Listen_Day". 
+
+- masser les pieds : spam clic sur la partie haute du pied => mettre un point rouge où on doit cliquer 20 fois dessus. Dossier => Pied
+
+- appeler un serveur à l'entrecote => il ne se passe rien et au moins une seconde après le début du mini jeu, y'a un png de serveur qui apparaît une seconde. Il peut y avoir des distracteur avec une vache ou un bandit. SI on clique sur un distracteur, c'est perdu. Si on clique sur le serveur, c'est gagné. Dossier => "Entrecote". 
+
+- faire la routine : appliquer un produit sur une zone spéciale => Il faut déplacer l'applicateur de produit sur une zone qui est choisi au hazard sur le visage du personnage. Il faut le faire deux fois pour réussir. Dossier "routine"
+
+- faire un brotato : déplacer le perso (la patate) pour tuer tous les ennemis qui seront placé au pif sur l'image. Il faut leur rentrer dedans pour les tuer. Les ennemis doivent être placés au hasard sur la carte et le personnage (la patate), toujours pile au centre du png de carte. Dossier "brotato". 
+
+- disco alien : Capture une vache qui cours super vite => prendre un png de pré et faire une alerte avec un objet qui peut être une vache ou rien. Quand on touche l'objet ça le capture avec une soucoupe. La vache traverse très vite l'écran, c'est du reflexe. Il faut créer un signal qui indique quelque chose arrive. La soucoupe est en haut au milieu du png. Dossier "capture". 

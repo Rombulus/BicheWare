@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BicheWare</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+        <div id="ui-layer">
+            <!-- Game UI elements (score, timer, etc.) will go here -->
+            <div id="timer"></div>
+            <div id="instruction"></div>
+        </div>
+    </div>
+
+    <!-- Dev Tools Overlay -->
+    <div id="dev-tools">
+        <h3>Dev Tools</h3>
+        <select id="game-selector">
+            <option value="">Sélectionner un jeu...</option>
+            <!-- Options will be populated by JS -->
+        </select>
+        <button id="start-game-btn">Lancer</button>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
