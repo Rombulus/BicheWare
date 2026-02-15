@@ -46,6 +46,8 @@ export class Couverts extends MiniGame {
         window.addEventListener('mouseup', this.handleUp);
 
         this.showInstruction("RANGE TOUT !");
+        this.playSound('Son/SFX/Couverts/couverts.mp3', true);
+        this.playSound('Son/SFX/Entrecote/fond.mp3', true); // Re-using restaurant background sound
     }
 
     handleDown(e) {

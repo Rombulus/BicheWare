@@ -56,7 +56,7 @@ startBtn.addEventListener('click', () => {
     if (selectedGame) {
         gameManager.startGame(selectedGame);
     } else {
-        alert("Veuillez sélectionner un jeu !");
+        gameManager.startRandomLoop();
     }
 });
 

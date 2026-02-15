@@ -58,6 +58,10 @@ export class AiresCerveau extends MiniGame {
     handleUp() {
         this.isRubbing = false;
         this.lastMouse = null;
+        if (this.scratchSound) {
+            this.scratchSound.pause();
+            this.scratchSound = null;
+        }
     }
 
     handleMove(e) {
@@ -66,11 +70,14 @@ export class AiresCerveau extends MiniGame {
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
-            // Check if inside target zone
             const z = this.zones[this.targetZoneIndex];
 
             if (mouseX > z.x && mouseX < z.x + z.w &&
                 mouseY > z.y && mouseY < z.y + z.h) {
+
+                if (!this.scratchSound) {
+                    this.scratchSound = this.playSound('Son/SFX/AireCerveau/scratch.mp3', true);
+                }
 
                 const dx = Math.abs(e.clientX - this.lastMouse.x);
                 const dy = Math.abs(e.clientY - this.lastMouse.y);
@@ -78,11 +85,26 @@ export class AiresCerveau extends MiniGame {
 
                 this.rubScore += dist * 0.5;
                 if (this.rubScore > this.requiredRub) {
-                    this.win();
+                    this.triggerWin();
+                }
+            } else {
+                if (this.scratchSound) {
+                    this.scratchSound.pause();
+                    this.scratchSound = null;
                 }
             }
             this.lastMouse = { x: e.clientX, y: e.clientY };
         }
+    }
+
+    triggerWin() {
+        if (this.isWon) return;
+        this.win();
+        if (this.scratchSound) {
+            this.scratchSound.pause();
+            this.scratchSound = null;
+        }
+        this.playSound('Son/SFX/AireCerveau/snore.mp3');
     }
 
     update(dt) {

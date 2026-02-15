@@ -66,6 +66,8 @@ export class Routine extends MiniGame {
         const dx = tipX - this.targetZone.x;
         const dy = tipY - this.targetZone.y;
 
+        this.playSound('Son/SFX/Routine/plop.mp3');
+
         if (Math.sqrt(dx * dx + dy * dy) < this.targetZone.r + 30) {
             this.targetZone.done = true;
             this.successCount++;
@@ -102,10 +104,10 @@ export class Routine extends MiniGame {
         }
 
         if (this.pipetteImg.complete) {
-            this.ctx.drawImage(this.pipetteImg, this.pipetteX - 50, this.pipetteY - 150, 100, 300);
+            this.ctx.drawImage(this.pipetteImg, this.pipetteX - 75, this.pipetteY - 150, 150, 300);
         } else {
             this.ctx.fillStyle = "white";
-            this.ctx.fillRect(this.pipetteX, this.pipetteY, 50, 150);
+            this.ctx.fillRect(this.pipetteX - 25, this.pipetteY, 50, 150);
         }
 
         super.draw();

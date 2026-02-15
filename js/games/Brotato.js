@@ -27,9 +27,6 @@ export class Brotato extends MiniGame {
         this.enemies = [];
 
         for (let i = 0; i < 4; i++) {
-            // V5: Spawn closer to center
-            // Canvas 800x600. Center 400,300.
-            // Range: 200-600 X, 100-500 Y?
             const ex = 200 + Math.random() * 400;
             const ey = 100 + Math.random() * 400;
 
@@ -43,6 +40,7 @@ export class Brotato extends MiniGame {
 
         window.addEventListener('mousemove', this.handleMove);
         this.showInstruction("FONCE DEDANS !");
+        this.playSound('Son/SFX/Brotato/ost.mp3', true);
     }
 
     handleMove(e) {
@@ -62,13 +60,14 @@ export class Brotato extends MiniGame {
             if (!enem.alive) return;
             aliveCount++;
 
-            // Check collision
             const dx = this.player.x - enem.x;
             const dy = this.player.y - enem.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             if (dist < this.player.r + enem.r - 40) {
                 enem.alive = false;
+                this.playSound('Son/SFX/Brotato/die.mp3');
+                aliveCount--;
             }
         });
 

@@ -13,12 +13,14 @@ export class Capture extends MiniGame {
         this.cowImg = new Image();
         this.cowImg.src = 'Images/Capture/vache_ufo.png';
 
+        this.rayImg = new Image();
+        this.rayImg.src = 'Images/Capture/ray.png';
+
         this.cowX = -200;
         this.cowY = 400;
-        this.cowSpeed = 800; // Slower? User said WAY too fast.
+        this.cowSpeed = 800;
 
-        // V2: Zone based capture
-        this.captureZone = { x: 300, y: 400, w: 200, h: 100 }; // Under UFO
+        this.captureZone = { x: 300, y: 400, w: 200, h: 100 };
 
         this.captured = false;
         this.hasLaunched = false;
@@ -31,6 +33,7 @@ export class Capture extends MiniGame {
         console.log("Capture Start V2");
 
         this.cowX = -200;
+        this.cowY = 400;
         this.captured = false;
         this.hasLaunched = false;
 
@@ -42,17 +45,16 @@ export class Capture extends MiniGame {
         window.addEventListener('keydown', this.handleInput);
 
         this.showInstruction("CAPTURE !");
+        this.playSound('Son/SFX/UFO/ufo.mp3', true);
     }
 
     handleInput() {
         if (!this.isActive || this.captured) return;
 
-        // Check if cow is within zone
-        // Simple 1D check since Y is constant?
-        // Zone X: 300 to 500. Cow must be inside.
-
-        if (this.cowX > 250 && this.cowX < 550) { // Lenient zone
+        if (this.cowX > 250 && this.cowX < 550) {
             this.captured = true;
+            this.stopAllSounds();
+            this.playSound('Son/SFX/UFO/ray.mp3');
             this.win();
         }
     }
@@ -63,10 +65,15 @@ export class Capture extends MiniGame {
 
         if (this.hasLaunched && !this.captured) {
             this.cowX += this.cowSpeed * dt;
+            if (this.cowX > this.canvas.width + 200) {
+                this.endGame();
+            }
         }
 
         if (this.captured) {
             this.cowY -= 500 * dt;
+            this.cowRotation = (this.cowRotation || 0) + 10 * dt;
+            this.cowScale = Math.max(0, (this.cowScale === undefined ? 1 : this.cowScale) - 0.8 * dt);
         }
     }
 
@@ -75,29 +82,37 @@ export class Capture extends MiniGame {
 
         if (this.bg.complete) {
             this.ctx.drawImage(this.bg, 0, 0, this.canvas.width, this.canvas.height);
-        } else {
-            this.ctx.fillStyle = "green";
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-
-        // UFO V2: Bigger (200x100)
-        if (this.ufoImg.complete) {
-            this.ctx.drawImage(this.ufoImg, 300, 50, 200, 100);
-        } else {
-            this.ctx.fillStyle = "gray";
-            this.ctx.fillRect(300, 50, 200, 100);
         }
 
         // Beam
-        this.ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
-        this.ctx.fillRect(320, 120, 160, 400); // Visual zone hint
+        if (this.rayImg.complete) {
+            this.ctx.save();
+            this.ctx.translate(400, 320);
+            this.ctx.scale(-1.5, 1.2); // Enlarge and flip horizontal
+            this.ctx.drawImage(this.rayImg, -80, -200, 160, 400);
+            this.ctx.restore();
+        } else {
+            this.ctx.fillStyle = "rgba(0, 255, 0, 0.3)";
+            this.ctx.fillRect(320, 120, 160, 400);
+        }
+
+        // UFO
+        if (this.ufoImg.complete) {
+            this.ctx.drawImage(this.ufoImg, 300, 50, 200, 100);
+        }
 
         // Cow
         if (this.cowImg.complete) {
-            this.ctx.drawImage(this.cowImg, this.cowX, this.cowY, 150, 120); // Bigger cow?
-        } else {
-            this.ctx.fillStyle = "white";
-            this.ctx.fillRect(this.cowX, this.cowY, 100, 80);
+            this.ctx.save();
+            const cx = this.cowX + 75;
+            const cy = this.cowY + 60;
+            this.ctx.translate(cx, cy);
+            if (this.captured) {
+                this.ctx.rotate(this.cowRotation);
+                this.ctx.scale(this.cowScale, this.cowScale);
+            }
+            this.ctx.drawImage(this.cowImg, -75, -60, 150, 120);
+            this.ctx.restore();
         }
 
         super.draw();

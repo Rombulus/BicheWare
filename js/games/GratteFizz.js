@@ -41,11 +41,18 @@ export class GratteFizz extends MiniGame {
     handleDown(e) {
         this.isRubbing = true;
         this.lastMouse = { x: e.clientX, y: e.clientY };
+        if (!this.isWon && !this.scratchSound) {
+            this.scratchSound = this.playSound('Son/SFX/GratteChien/gratte.mp3', true);
+        }
     }
 
     handleUp() {
         this.isRubbing = false;
         this.lastMouse = null;
+        if (this.scratchSound) {
+            this.scratchSound.pause();
+            this.scratchSound = null;
+        }
     }
 
     handleMove(e) {
@@ -54,13 +61,33 @@ export class GratteFizz extends MiniGame {
             const dy = Math.abs(e.clientY - this.lastMouse.y);
             const dist = dx + dy;
 
-            this.rubScore += dist * 0.5;
-            this.lastMouse = { x: e.clientX, y: e.clientY };
+            if (dist > 2) { // Minimal movement to count as scratching
+                this.rubScore += dist * 0.5;
+                this.lastMouse = { x: e.clientX, y: e.clientY };
 
-            if (this.rubScore > this.requiredRub) {
-                this.win();
+                if (this.rubScore > this.requiredRub) {
+                    this.triggerWin();
+                }
             }
         }
+    }
+
+    triggerWin() {
+        if (this.isWon) return;
+        this.win();
+
+        if (this.scratchSound) {
+            this.scratchSound.pause();
+            this.scratchSound = null;
+        }
+
+        this.playSound('Son/SFX/GratteChien/success - Sound Effect (1).mp3');
+
+        setTimeout(() => {
+            if (this.isActive) {
+                this.playSound('Son/SFX/GratteChien/pant.mp3');
+            }
+        }, 1000);
     }
 
     update(dt) {

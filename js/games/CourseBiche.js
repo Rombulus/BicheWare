@@ -10,6 +10,12 @@ export class CourseBiche extends MiniGame {
         this.playerImg = new Image();
         this.playerImg.src = 'Images/Course/running_biche.png';
 
+        this.arrowLeft = new Image();
+        this.arrowLeft.src = 'Images/Course/gauche.png';
+
+        this.arrowRight = new Image();
+        this.arrowRight.src = 'Images/Course/droite.png';
+
         this.playerX = 50;
         this.playerY = 300;
         this.lastInput = null;
@@ -18,12 +24,18 @@ export class CourseBiche extends MiniGame {
 
         // V6: Interaction Counter
         this.interactions = 0;
-        this.requiredInteractions = 12;
+        this.requiredInteractions = 10;
 
         this.handleKeyDown = this.handleKeyDown.bind(this);
 
-        this.prompt = "GAUCHE";
+        this.prompt = "left"; // Arrow type
         this.isFinished = false;
+
+        // Video Assets
+        this.video = document.createElement('video');
+        this.video.src = 'Video/confettis.mp4';
+        this.video.loop = false;
+        this.video.muted = true; // Best practice for auto-play
     }
 
     start() {
@@ -32,13 +44,14 @@ export class CourseBiche extends MiniGame {
 
         this.playerX = 50;
         this.lastInput = null;
-        this.prompt = "GAUCHE";
+        this.prompt = "left";
         this.isFinished = false;
         this.interactions = 0;
 
         window.addEventListener('keydown', this.handleKeyDown);
 
         this.showInstruction("ALTERNE !");
+        this.playSound('Son/SFX/RunBiche/crowd.mp3', true);
     }
 
     handleKeyDown(e) {
@@ -48,13 +61,13 @@ export class CourseBiche extends MiniGame {
         if (e.code === 'ArrowLeft') {
             if (this.lastInput !== 'left') {
                 this.lastInput = 'left';
-                this.prompt = "DROITE";
+                this.prompt = "right";
                 moved = true;
             }
         } else if (e.code === 'ArrowRight') {
             if (this.lastInput !== 'right') {
                 this.lastInput = 'right';
-                this.prompt = "GAUCHE";
+                this.prompt = "left";
                 moved = true;
             }
         }
@@ -63,18 +76,23 @@ export class CourseBiche extends MiniGame {
             this.interactions++;
             this.advance();
             if (this.interactions >= this.requiredInteractions) {
-                this.isFinished = true;
-                this.playerX = this.finishLine; // Snap to end
-                this.win();
+                this.triggerWin();
             }
         }
     }
 
+    triggerWin() {
+        if (this.isFinished) return;
+        this.isFinished = true;
+        this.playerX = this.finishLine;
+        this.win();
+
+        this.playSound('Son/SFX/RunBiche/win.mp3');
+        this.video.play().catch(e => console.warn("Video failed:", e));
+    }
+
     advance() {
         if (this.isFinished) return;
-
-        // Calculate step based on interactions needed to reach finish line from start
-        // Dist = 680 - 50 = 630. Steps = 12. Step = 52.5
         this.playerX += 52;
     }
 
@@ -88,31 +106,60 @@ export class CourseBiche extends MiniGame {
 
         if (this.bg.complete) {
             this.drawImageProp(this.ctx, this.bg, 0, 0, this.canvas.width, this.canvas.height);
-        } else {
-            this.ctx.fillStyle = "green";
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
 
         if (this.playerImg.complete) {
             this.ctx.drawImage(this.playerImg, this.playerX, this.playerY, 150, 150);
-        } else {
-            this.ctx.fillStyle = "orange";
-            this.ctx.fillRect(this.playerX, this.playerY, 50, 50);
         }
 
         if (!this.isFinished) {
-            this.ctx.fillStyle = "white";
-            this.ctx.strokeStyle = "black";
-            this.ctx.lineWidth = 4;
-            this.ctx.font = "bold 60px Arial";
-            this.ctx.textAlign = "center";
-            this.ctx.strokeText(this.prompt, 400, 100);
-            this.ctx.fillText(this.prompt, 400, 100);
-            this.ctx.textAlign = "left";
+            const arrow = this.prompt === 'left' ? this.arrowLeft : this.arrowRight;
+            if (arrow.complete) {
+                const size = 100;
+                // Center-ish but slightly spread out according to request
+                const xOffset = this.prompt === 'left' ? -120 : 120;
+                this.ctx.drawImage(arrow, 400 + xOffset - size / 2, 50, size, size);
+            }
         } else {
+            // Draw confetti if video is playing
+            if (!this.video.paused && !this.video.ended) {
+                // Implementing chroma key removed green
+                this.ctx.save();
+                // Create an offscreen buffer or just use globalCompositeOperation? 
+                // Better to just draw frame by frame and filter if possible?
+                // For simplicity in JS Canvas without shaders: 
+                // We'll draw to a temp canvas or use a filter.
+                // But simple 2d canvas doesn't have chroma key.
+                // Actually, the user wants me to REMOVE the green.
+                // I will do it pixel by pixel if performance allows, or use a blend mode.
+
+                // Real Implementation:
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = this.canvas.width;
+                tempCanvas.height = this.canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(this.video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+                const frame = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const l = frame.data.length / 4;
+                for (let i = 0; i < l; i++) {
+                    const r = frame.data[i * 4 + 0];
+                    const g = frame.data[i * 4 + 1];
+                    const b = frame.data[i * 4 + 2];
+                    // If green is dominant
+                    if (g > 100 && g > r * 1.2 && g > b * 1.2) {
+                        frame.data[i * 4 + 3] = 0;
+                    }
+                }
+                this.ctx.putImageData(frame, 0, 0);
+                this.ctx.restore();
+            }
+
             this.ctx.fillStyle = "cyan";
             this.ctx.font = "bold 60px Arial";
-            this.ctx.fillText("VICTOIRE !", 280, 100);
+            this.ctx.textAlign = "center";
+            this.ctx.fillText("VICTOIRE !", 400, 100);
+            this.ctx.textAlign = "left";
         }
 
         super.draw();
@@ -140,6 +187,9 @@ export class CourseBiche extends MiniGame {
     }
 
     cleanup() {
+        super.cleanup();
         window.removeEventListener('keydown', this.handleKeyDown);
+        this.video.pause();
+        this.video.src = "";
     }
 }

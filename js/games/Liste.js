@@ -25,6 +25,8 @@ export class Liste extends MiniGame {
         // I will inspect draw loop.
 
         this.currentLine = [];
+        this.allMarks = []; // V5: Fix Disappearing Lines & crash
+
 
         this.handleDown = this.handleDown.bind(this);
         this.handleMove = this.handleMove.bind(this);
@@ -144,20 +146,11 @@ export class Liste extends MiniGame {
 
         if (this.bg.complete) {
             this.ctx.drawImage(this.bg, 0, 0, this.canvas.width, this.canvas.height);
-        } else {
-            this.ctx.fillStyle = "#eee";
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
 
-        // Patterns V5: Thicker VERTICALLY
-        // Scale height x2?
         this.items.forEach(item => {
             if (item.img.complete) {
-                // Draw higher and a bit lower? 50 is base height. Make it 80.
                 this.ctx.drawImage(item.img, item.x, item.y - 15, item.w, 80);
-            } else {
-                this.ctx.fillStyle = "black";
-                this.ctx.fillText("================", item.x, item.y + 25);
             }
         });
 
@@ -167,13 +160,11 @@ export class Liste extends MiniGame {
         this.ctx.lineCap = "round";
         this.ctx.beginPath();
 
-        // Draw ALL stored lines (from items)
-        this.items.forEach(item => {
-            item.lines.forEach(line => {
-                if (line.length < 2) return;
-                this.ctx.moveTo(line[0].x, line[0].y);
-                for (let i = 1; i < line.length; i++) this.ctx.lineTo(line[i].x, line[i].y);
-            });
+        // Draw ALL stored lines
+        this.allMarks.forEach(line => {
+            if (line.length < 2) return;
+            this.ctx.moveTo(line[0].x, line[0].y);
+            for (let i = 1; i < line.length; i++) this.ctx.lineTo(line[i].x, line[i].y);
         });
 
         // Draw current line
@@ -187,6 +178,7 @@ export class Liste extends MiniGame {
     }
 
     cleanup() {
+        super.cleanup();
         this.canvas.removeEventListener('mousedown', this.handleDown);
         window.removeEventListener('mousemove', this.handleMove);
         window.removeEventListener('mouseup', this.handleUp);

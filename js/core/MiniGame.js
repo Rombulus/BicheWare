@@ -5,11 +5,26 @@ export class MiniGame {
         this.isActive = false;
         this.timeLeft = 0;
         this.isWon = false;
+
+        // Audio Tracking
+        this.activeSounds = [];
+
+        // Timer Assets
+        this.timerImages = {};
+        this.loadTimerAssets();
+    }
+
+    loadTimerAssets() {
+        const frames = ['bombe_1', 'bombe_2', 'bombe_3', 'bombe_4', 'bombe_5', 'boom'];
+        frames.forEach(frame => {
+            const img = new Image();
+            img.src = `Images/Timer/${frame}.png`;
+            this.timerImages[frame] = img;
+        });
     }
 
     /**
      * Called when the game starts.
-     * Override this to initialize game state.
      */
     start() {
         this.isActive = true;
@@ -19,10 +34,27 @@ export class MiniGame {
     }
 
     /**
-     * Called every frame.
-     * Override this to update game logic.
-     * @param {number} dt Delta time in seconds
+     * Helper to play a sound and track it for cleanup.
      */
+    playSound(src, loop = false) {
+        const audio = new Audio(src);
+        audio.loop = loop;
+        audio.play().catch(e => console.warn("Audio play failed:", e));
+        this.activeSounds.push(audio);
+        return audio;
+    }
+
+    /**
+     * Stop all sounds tracked by this mini-game.
+     */
+    stopAllSounds() {
+        this.activeSounds.forEach(audio => {
+            audio.pause();
+            audio.src = "";
+        });
+        this.activeSounds = [];
+    }
+
     update(dt) {
         if (!this.isActive) return;
 
@@ -32,43 +64,51 @@ export class MiniGame {
         }
     }
 
-    /**
-     * Called every frame to draw the game.
-     * Override this to render game elements.
-     */
     draw() {
         if (!this.isActive) return;
 
-        // Default draw
-        this.ctx.fillStyle = "#fff";
-        this.ctx.font = "30px Arial";
-        this.ctx.fillText(`Time: ${this.timeLeft.toFixed(1)}`, 10, 30);
+        // Default draw replaced by timer logic
+        this.drawTimer();
     }
 
-    /**
-     * Called when the game ends (time out or win condition met).
-     */
+    drawTimer() {
+        if (this.timeLeft > 5) return;
+
+        let frameName = '';
+        if (this.timeLeft <= 0) {
+            frameName = 'boom';
+        } else {
+            const seconds = Math.ceil(this.timeLeft); // 5, 4, 3, 2, 1
+            frameName = `bombe_${seconds}`;
+        }
+
+        const img = this.timerImages[frameName];
+        if (img && img.complete) {
+            // WarioWare Touched style: Large and stretched at the bottom
+            const baseW = 400;
+            const baseH = 200;
+            // Stretch or center? User said "étirer au max"
+            // Let's make it fill a large portion of the bottom center
+            const displayW = this.canvas.width * 0.8;
+            const displayH = 250;
+            this.ctx.drawImage(img, (this.canvas.width - displayW) / 2, this.canvas.height - displayH + 50, displayW, displayH);
+        }
+    }
+
     endGame() {
         this.isActive = false;
         console.log(`Game Over. Won: ${this.isWon}`);
+        this.stopAllSounds(); // Ensure local sounds stop
         if (this.onGameEnd) {
             this.onGameEnd(this.isWon);
         }
     }
 
-    /**
-     * Call this when the player wins the mini-game.
-     */
     win() {
         this.isWon = true;
-        // Optionally end immediately or wait for time
-        // this.endGame(); 
     }
 
-    /**
-     * Clean up event listeners etc.
-     */
     cleanup() {
-        // Override to remove event listeners
+        this.stopAllSounds();
     }
 }

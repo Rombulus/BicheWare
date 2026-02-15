@@ -1,0 +1,38 @@
+A modifier : 
+
+Changer le timer moche par le timer bombe. Il faut faire 5, 4, 3, 2, 1 et boom quand le timer atteint 0. C'est toujours un timer de 5 secondes peu importe le temps de base, il ne doit apparaître que quand il reste 5 secondes. 
+
+Faut commencer à faire l'enchainement aléatoire des minijeux. Quand on en réussi on en échoue 1, il faut attendre une seconde puis en lancé un autre qui n'a pas encore été lancé et ce jusqu'à ce qu'on les ai tous joués. 
+
+Général : intégrer une des troix voix quand on réussi dans le dossier "clear" du dossier parent "voix". Et une des troix voix du dossier "lost" quand on échoue. De manière générale, tous les sons qui se lancent et qui font uniquement parti d'un mini-jeu doivent s'arrêter quand on termine le dit mini-jeu. 
+
+Helicobiche : ajouter le son de l'helicoptère qui se lance seulement quand l'hélico bouge. Quand le minijeu est réussi, il faut stopper le son. 
+
+GratteChien : quand on gratte le chien, il faut qu'il y ai le sound effect du Gratte qui se lance et qui se stoppe quandon arrête ou qu'on gagne. Quand on gagne, le son succes se lance, suivant une seconde après du lancement du son pant. 
+
+Tournesol : ajoute le png goutte à la place du vieu trait bleu quand on arrose, réduit sa taille si nécéssaire. Et il faut le retourner sur l'axe vertical. Fais bien attention à ce que ça soit bien proche du bout de l'arrosoir pour que ça soit cool. 
+On va également ajouter quelques sons. Quand on verse de l'eau, il faut que le son "water" se joue et se coupe quand on réussi. Quand le tournesol pousse, il faut que le son "pousse" se lance.
+
+AireCerveau : quand on gratte la tête, il faut que le son scratch se lance tant qu'on gratte et qu'il sestoppe quand on gagne, perd ou qu'on arrête de gratter. Quand on gagne, il faut que le son "snore" se lance et se stoppe quand on passe au prochain minijeu. 
+
+RunningBiche : exceptionnellement, j'aimerais qu'on ajoute un effet de confettis quand on gagne qui se stoppe dès qu'on passe au niveau d'après, c'est à dire qu' on balaye tout ce qui est à l'écran pour qu'il ne reste plus rien de l'effet. il est dans le dossier vidéo et s'appelle confettis.mp4. Quand le mini jeu démarre, il faut que le son crowd se lance et quand on gagne, il faut que le son "win" se lance. On va également remplacer les mots "gauche" et "droite" par l'image de la flèche gauche et de la flèche droite en alternance. ils sont dans le dossier image et s'appellent gauche et droite. Il faut qu'ils soient alignés sur le haut du jeu mais légèrement à gauche (pour la touche gauche) et à droite (pour la touche droite) du centre vertical du jeu.
+
+BearTime : il faut jouer en fond soundtrack.mp3 tant qu'on est dans le minijeu, quand il se fini faut le stopper. Quand le "je t'aime" apparaît, il faut jouer le check.mp3
+
+Liste : Il faut durcir un peu la règle, là j'ai écrit n'importe quoi dessus et ça m'a quand même dit que ça fonctionne. Il faut que ce qu'on écrive suive un minimum les guides pour que ça marche. Débrouille toi pour introduire ça. Ensuite, il faut jouer le son scribe tant qu'on écrit. Quand on n'écrit pas, le son ne doit pas se jouer. 
+
+Couverts : joue le son de cuisine dès qu'on entre et arrête le quand on sors du minijeu (c'est-à-dire qu'on passe à l'écran de transition). 
+
+Piano : essaye de trouver des vrais sons de piano qui font piano. 
+
+BearFind : joue la musique dès le début et arrête la quand le mini jeu est fini. Tu dois jouer le son de check quand on trouve la bonne cible. et le son wrong quand on se trompe. 
+
+Pied : quand on clique, ça doit jouer le son du pop. Quand on réussi y'a le "oh" qui se lance. 
+
+Entrecote : décale les 3 cible un peu plus vers la droite, parce que là c'est moche. Pour les sons, joue le son "fond" en boucle jusqu'à ce que ce le mini jeu soit fini. 
+
+Routine : il faudrait que l'image de la pipette soit plus large. Egalement quand on clique pour lâcher une goutte il faut que le son plop se joue. 
+
+Brotato : joue la musique ost d'entrée de jeu et stoppe là quand le minijeu est terminé. Quand on touche un alien le son "die" doit être joué. 
+
+UFO/Capture : Lance le son ufo quand le minijeu démarre et quand on capture la vache il faut jouer le son "ray". De plus tu vas utiliser le png "rayon" pour signifier la zone de capture de l'alien. il faut que la vache soit dans cette zone pour être capturée quand on clique. Ca sert à habiller le gros rectangle vert que tu as mis actuellement. 

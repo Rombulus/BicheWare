@@ -24,7 +24,8 @@ export class Pied extends MiniGame {
     }
 
     handleClick(e) {
-        if (!this.isActive) return;
+        if (!this.isActive || this.isWon) return;
+
 
         const rect = this.canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
@@ -35,7 +36,10 @@ export class Pied extends MiniGame {
 
         if (Math.sqrt(dx * dx + dy * dy) < this.target.r) {
             this.clicks++;
-            if (this.clicks >= this.requiredClicks) {
+            if (this.clicks < this.requiredClicks) {
+                this.playSound('Son/SFX/Pied/pop.mp3');
+            } else if (this.clicks === this.requiredClicks) {
+                this.playSound('Son/SFX/Pied/oh.mp3');
                 this.win();
             }
         }

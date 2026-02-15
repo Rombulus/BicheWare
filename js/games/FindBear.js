@@ -27,11 +27,9 @@ export class FindBear extends MiniGame {
         console.log("FindBear Start V2");
 
         this.objects = [];
-        // V2: Reduce num distractors, increase size
         const numDistractors = 10;
-        const objSize = 100; // was 50
+        const objSize = 100;
 
-        // Spawn distractors
         for (let i = 0; i < numDistractors; i++) {
             this.objects.push({
                 x: Math.random() * (this.canvas.width - objSize),
@@ -43,7 +41,6 @@ export class FindBear extends MiniGame {
             });
         }
 
-        // Spawn Target
         this.objects.push({
             x: Math.random() * (this.canvas.width - objSize),
             y: Math.random() * (this.canvas.height - objSize),
@@ -53,11 +50,12 @@ export class FindBear extends MiniGame {
             isTarget: true
         });
 
-        // Shuffle checks order 
         this.objects.sort(() => Math.random() - 0.5);
 
         this.canvas.addEventListener('mousedown', this.handleClick);
         this.showInstruction("TROUVE L'OURS !");
+        const bgm = this.playSound('Son/SFX/BearFind/musique.mp3', true);
+        if (bgm) bgm.volume = 1.0; // Ensure max volume
     }
 
     handleClick(e) {
@@ -71,9 +69,16 @@ export class FindBear extends MiniGame {
             const obj = this.objects[i];
             if (mx > obj.x && mx < obj.x + obj.w && my > obj.y && my < obj.y + obj.h) {
                 if (obj.isTarget) {
+                    this.stopAllSounds();
+                    this.playSound('Son/SFX/BearFind/check.mp3');
                     this.win();
                 } else {
-                    this.endGame();
+                    this.stopAllSounds();
+                    this.playSound('Son/SFX/BearFind/wrong.mp3');
+                    // Delay end to allow sound to play and maintain momentum
+                    setTimeout(() => {
+                        this.endGame();
+                    }, 1500);
                 }
                 return;
             }

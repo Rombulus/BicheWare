@@ -87,14 +87,34 @@ export class Piano extends MiniGame {
         if (this.audioCtx.state === 'suspended') {
             this.audioCtx.resume();
         }
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
-        osc.frequency.value = freq;
-        osc.connect(gain);
-        gain.connect(this.audioCtx.destination);
-        osc.start();
-        gain.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + dur);
-        osc.stop(this.audioCtx.currentTime + dur);
+
+        // Multi-oscillator synthesis for a richer, more "piano-like" sound
+        // Real piano has harmonics and a sharp attack
+        const now = this.audioCtx.currentTime;
+
+        const voices = [
+            { f: freq, g: 0.6, type: 'triangle' },
+            { f: freq * 2, g: 0.2, type: 'sine' },
+            { f: freq * 3, g: 0.1, type: 'sine' }
+        ];
+
+        voices.forEach(v => {
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.type = v.type;
+            osc.frequency.setValueAtTime(v.f, now);
+
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+
+            // Piano-like envelope: Sharp attack, exponential decay
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(v.g, now + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+            osc.start(now);
+            osc.stop(now + dur);
+        });
     }
 
     update(dt) {

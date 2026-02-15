@@ -32,20 +32,25 @@ export class Entrecote extends MiniGame {
 
     start() {
         super.start();
-        console.log("Entrecote Start V6");
+        console.log("Entrecote Start V7 - Final");
 
         this.state = 'waiting';
         this.timer = 0;
         this.waitTime = 1.0 + Math.random() * 2.0;
 
-        // V6: Infinite Time
         this.timeLeft = 9999;
 
+        // Dynamic positioning
+        this.startX = this.canvas.width;
+        this.targetX = this.canvas.width - 126; // V5: Shifted 6px left (was 120)
+
+
         this.currentItem = null;
-        this.itemX = 800;
+        this.itemX = this.startX;
 
         this.canvas.addEventListener('mousedown', this.handleClick);
         this.showInstruction("ATTENDS !");
+        this.playSound('Son/SFX/Entrecote/fond.mp3', true);
     }
 
     handleClick(e) {
@@ -88,8 +93,8 @@ export class Entrecote extends MiniGame {
         } else if (this.state === 'showing') {
             if (this.step === 'in') {
                 this.itemX -= this.itemSpeed * dt;
-                if (this.itemX <= 500) {
-                    this.itemX = 500;
+                if (this.itemX <= this.targetX) {
+                    this.itemX = this.targetX;
                     this.step = 'wait';
                     this.waitTimer = 0.5;
                 }
@@ -98,7 +103,7 @@ export class Entrecote extends MiniGame {
                 if (this.waitTimer <= 0) this.step = 'out';
             } else if (this.step === 'out') {
                 this.itemX += this.itemSpeed * dt;
-                if (this.itemX > 800) {
+                if (this.itemX > this.startX) {
                     // Missed the pass. Reset to wait?
                     // User implies we wait for the right trigger.
                     // So we go back to waiting loop.
@@ -113,7 +118,7 @@ export class Entrecote extends MiniGame {
     spawn() {
         this.state = 'showing';
         this.step = 'in';
-        this.itemX = 800; // Start off-screen
+        this.itemX = this.startX; // Start off-screen
 
         const r = Math.random();
         if (r < 0.5) {
@@ -137,20 +142,23 @@ export class Entrecote extends MiniGame {
         if (this.state === 'showing' && this.currentItem) {
             const img = this.currentItem.img;
             if (img.complete) {
-                this.ctx.drawImage(img, this.itemX, this.itemY, 300, 300);
+                this.ctx.save();
+                this.ctx.translate(this.itemX + 150, this.itemY + 150);
+                // No scale(-1, 1) - user image looks Left already.
+                this.ctx.rotate(-45 * Math.PI / 180); // Rotate -45 degrees
+                this.ctx.drawImage(img, -150, -150, 300, 300);
+                this.ctx.restore();
             }
         } else if (this.state === 'finished') {
             if (this.isWon) {
                 this.ctx.fillStyle = "lime";
-                this.ctx.fillText("MIAM !", 350, 300);
+                this.ctx.font = "bold 60px Arial";
+                this.ctx.fillText("MIAM !", this.canvas.width / 2 - 100, 300);
             }
         }
 
-        // V6: NO super.draw() call!
-        // This prevents the Timer text from appearing.
-        // We do have to ensure instruction or other base UI is considered?
-        // GameManager draws instruction DOM separately.
-        // So we are good.
+        // V6: super.draw() called again to show the timer!
+        super.draw();
     }
 
     cleanup() {

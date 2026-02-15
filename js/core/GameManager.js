@@ -1,5 +1,3 @@
-import { MiniGame } from './MiniGame.js';
-
 export class GameManager {
     constructor() {
         this.canvas = document.getElementById('game-canvas');
@@ -12,6 +10,10 @@ export class GameManager {
         this.uiTimer = document.getElementById('timer');
         this.uiInstruction = document.getElementById('instruction');
 
+        // Game Loop State
+        this.playedGames = new Set();
+        this.isLooping = false;
+
         this.loop = this.loop.bind(this);
         requestAnimationFrame(this.loop);
     }
@@ -20,7 +22,15 @@ export class GameManager {
         this.games[name] = gameClass;
     }
 
+    /**
+     * Start a specific game or the random loop if no name provided.
+     */
     startGame(name) {
+        if (!name) {
+            this.startRandomLoop();
+            return;
+        }
+
         if (this.currentGame) {
             this.currentGame.cleanup();
         }
@@ -45,11 +55,52 @@ export class GameManager {
         }, 1000);
     }
 
+    startRandomLoop() {
+        this.isLooping = true;
+        this.playedGames.clear();
+        this.nextRandomGame();
+    }
+
+    nextRandomGame() {
+        const available = Object.keys(this.games).filter(name => !this.playedGames.has(name));
+
+        if (available.length === 0) {
+            console.log("All games played!");
+            this.isLooping = false;
+            this.showInstruction("BRAVO ! FIN DE LA BICHE.");
+            return;
+        }
+
+        const randomIndex = Math.floor(Math.random() * available.length);
+        const name = available[randomIndex];
+        this.playedGames.add(name);
+        this.startGame(name);
+    }
+
     handleGameEnd(isWon) {
         console.log(`Mini-game finished. Won: ${isWon}`);
         this.showInstruction(isWon ? "GAGNÉ !" : "PERDU...");
 
-        // In full game, proceed to next game. In dev mode, maybe restart or wait.
+        // Play global voice sound
+        this.playGlobalVoice(isWon);
+
+        // Wait 1 second before next action
+        setTimeout(() => {
+            if (this.isLooping) {
+                this.nextRandomGame();
+            }
+        }, 1000);
+    }
+
+    playGlobalVoice(isWon) {
+        const folder = isWon ? 'clear' : 'lost';
+        const sounds = isWon
+            ? ['Biche.mp3', 'Wow.mp3', 'Yeah.mp3']
+            : ['nice try.mp3', 'oh no.mp3', 'too bad.mp3'];
+
+        const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+        const audio = new Audio(`Son/Voix/${folder}/${randomSound}`);
+        audio.play().catch(e => console.warn("Global voice failed:", e));
     }
 
     showInstruction(text) {
@@ -69,7 +120,7 @@ export class GameManager {
             this.currentGame.update(dt);
             this.currentGame.draw();
 
-            // Update UI
+            // Update UI (optional text timer, now we have bomb timer in canvas)
             if (this.uiTimer) {
                 this.uiTimer.innerText = Math.ceil(this.currentGame.timeLeft);
             }
