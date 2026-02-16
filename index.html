@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BicheWare</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/timer.css">
 </head>
+
 <body>
     <div id="game-container">
         <canvas id="game-canvas" width="800" height="600"></canvas>
@@ -13,6 +16,22 @@
             <!-- Game UI elements (score, timer, etc.) will go here -->
             <div id="timer"></div>
             <div id="instruction"></div>
+            <div id="bomb-timer-container">
+                <div id="bomb-visuals">
+                    <div id="fuse-container">
+                        <div id="fuse-segments">
+                            <div class="fuse-segment" id="seg-4"></div>
+                            <div class="fuse-segment" id="seg-3"></div>
+                            <div class="fuse-segment" id="seg-2"></div>
+                            <div class="fuse-segment" id="seg-1"></div>
+                        </div>
+                        <div id="fuse-tip"></div>
+                    </div>
+                    <div id="bomb-sprite">
+                        <div id="explosion-sprite"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -29,4 +48,5 @@
     <!-- Scripts -->
     <script type="module" src="js/main.js"></script>
 </body>
+
 </html>
