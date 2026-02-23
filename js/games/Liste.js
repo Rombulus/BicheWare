@@ -38,10 +38,10 @@ export class Liste extends MiniGame {
         console.log("Liste Start V5");
         this.timeLeft = 8.0;
 
+        this.itemNames = ["Lisse", "Biche"];
         this.items = [
             { id: 1, w: 400, h: 50, crossed: false, lines: [], img: this.patterns[0] },
-            { id: 2, w: 400, h: 50, crossed: false, lines: [], img: this.patterns[1] },
-            { id: 3, w: 400, h: 50, crossed: false, lines: [], img: this.patterns[2] }
+            { id: 2, w: 400, h: 50, crossed: false, lines: [], img: this.patterns[1] }
         ];
 
         const yPositions = [150, 250, 350];
@@ -55,8 +55,6 @@ export class Liste extends MiniGame {
         this.canvas.addEventListener('mousedown', this.handleDown);
         window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mouseup', this.handleUp);
-
-        this.showInstruction("RAYE TOUT !");
     }
 
     handleDown(e) {
@@ -77,12 +75,10 @@ export class Liste extends MiniGame {
         this.checkCrossings();
 
         // V5: Fix Disappearing Lines
-        // I should push currentLine to a global history OR attach to items?
-        // Attach to item is good if it crosses that item.
-        // But what if it crosses NONE? It should still show?
-        // "l'écriture disparaît" -> They want to see their scribbles even if they miss?
-        // Yes, likely.
-        // Let's store ALL lines in a separate list for rendering, independant of logic.
+        if (this.currentLine.length > 1) {
+            this.allMarks.push([...this.currentLine]);
+        }
+        this.currentLine = [];
     }
 
     addPoint(e) {
@@ -133,11 +129,13 @@ export class Liste extends MiniGame {
         if (!this.isActive) return;
         super.update(dt);
 
-        // V5: Check Win every update
-        // "quand on en a complété une, le jeu est compté comme gagné" -> Fix this
-        // Ensure EVERY item is crossed.
-        if (this.items.every(i => i.crossed) && !this.isWon) {
-            this.win();
+        if (this.timeLeft <= 0 && !this.isWon) {
+            // Check win exactly when timer ends
+            if (this.items.every(i => i.crossed)) {
+                this.win();
+            } else {
+                this.endGame();
+            }
         }
     }
 
@@ -182,5 +180,9 @@ export class Liste extends MiniGame {
         this.canvas.removeEventListener('mousedown', this.handleDown);
         window.removeEventListener('mousemove', this.handleMove);
         window.removeEventListener('mouseup', this.handleUp);
+    }
+
+    getInstruction() {
+        return "FAIS UNE LISTE !";
     }
 }

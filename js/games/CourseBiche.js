@@ -29,13 +29,8 @@ export class CourseBiche extends MiniGame {
         this.handleKeyDown = this.handleKeyDown.bind(this);
 
         this.prompt = "left"; // Arrow type
-        this.isFinished = false;
-
-        // Video Assets
-        this.video = document.createElement('video');
-        this.video.src = 'Video/confettis.mp4';
-        this.video.loop = false;
-        this.video.muted = true; // Best practice for auto-play
+        this.targetSteps = 20 + Math.floor(Math.random() * 10);
+        this.wonTriggered = false;
     }
 
     start() {
@@ -84,11 +79,10 @@ export class CourseBiche extends MiniGame {
     triggerWin() {
         if (this.isFinished) return;
         this.isFinished = true;
-        this.playerX = this.finishLine;
         this.win();
 
         this.playSound('Son/SFX/RunBiche/win.mp3');
-        this.video.play().catch(e => console.warn("Video failed:", e));
+        // Video removed per user request
     }
 
     advance() {
@@ -121,45 +115,7 @@ export class CourseBiche extends MiniGame {
                 this.ctx.drawImage(arrow, 400 + xOffset - size / 2, 50, size, size);
             }
         } else {
-            // Draw confetti if video is playing
-            if (!this.video.paused && !this.video.ended) {
-                // Implementing chroma key removed green
-                this.ctx.save();
-                // Create an offscreen buffer or just use globalCompositeOperation? 
-                // Better to just draw frame by frame and filter if possible?
-                // For simplicity in JS Canvas without shaders: 
-                // We'll draw to a temp canvas or use a filter.
-                // But simple 2d canvas doesn't have chroma key.
-                // Actually, the user wants me to REMOVE the green.
-                // I will do it pixel by pixel if performance allows, or use a blend mode.
-
-                // Real Implementation:
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = this.canvas.width;
-                tempCanvas.height = this.canvas.height;
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(this.video, 0, 0, tempCanvas.width, tempCanvas.height);
-
-                const frame = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                const l = frame.data.length / 4;
-                for (let i = 0; i < l; i++) {
-                    const r = frame.data[i * 4 + 0];
-                    const g = frame.data[i * 4 + 1];
-                    const b = frame.data[i * 4 + 2];
-                    // If green is dominant
-                    if (g > 100 && g > r * 1.2 && g > b * 1.2) {
-                        frame.data[i * 4 + 3] = 0;
-                    }
-                }
-                this.ctx.putImageData(frame, 0, 0);
-                this.ctx.restore();
-            }
-
-            this.ctx.fillStyle = "cyan";
-            this.ctx.font = "bold 60px Arial";
-            this.ctx.textAlign = "center";
-            this.ctx.fillText("VICTOIRE !", 400, 100);
-            this.ctx.textAlign = "left";
+            // Video removed per user request
         }
 
         super.draw();
@@ -189,7 +145,10 @@ export class CourseBiche extends MiniGame {
     cleanup() {
         super.cleanup();
         window.removeEventListener('keydown', this.handleKeyDown);
-        this.video.pause();
-        this.video.src = "";
+        // Video removed per user request
+    }
+
+    getInstruction() {
+        return "ALTERNE !";
     }
 }

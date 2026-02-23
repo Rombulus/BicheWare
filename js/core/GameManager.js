@@ -4,11 +4,12 @@ export class GameManager {
         this.ctx = this.canvas.getContext('2d');
         this.currentGame = null;
         this.games = {}; // Map of game names to classes
-        this.lastTime = 0;
+        this.lastTime = performance.now();
 
         // UI Elements
         this.uiTimer = document.getElementById('timer');
         this.uiInstruction = document.getElementById('instruction');
+        this.uiInstructionHeader = document.getElementById('instruction-header');
 
         // Game Loop State
         this.playedGames = new Set();
@@ -43,13 +44,19 @@ export class GameManager {
 
         this.currentGame = new GameClass(this.canvas, this.ctx);
         this.currentGame.onGameEnd = (isWon) => this.handleGameEnd(isWon);
+        this.currentGame.onShowInstruction = (text) => this.showInstruction(text);
 
-        this.showInstruction("PRÊT ?");
+        // Fetch the first instruction the game might want to show
+        let instr = "JOUTE !";
+        if (this.currentGame.getInstruction) {
+            instr = this.currentGame.getInstruction();
+        }
 
-        // Small delay before starting logic to show instruction
+        // Show once, wait for slide, THEN start game
+        this.showInstruction(instr);
+
         setTimeout(() => {
-            this.hideInstruction();
-            if (this.currentGame) {
+            if (this.currentGame && !this.currentGame.isActive) {
                 this.currentGame.start();
             }
         }, 1000);
@@ -79,7 +86,7 @@ export class GameManager {
 
     handleGameEnd(isWon) {
         console.log(`Mini-game finished. Won: ${isWon}`);
-        this.showInstruction(isWon ? "GAGNÉ !" : "PERDU...");
+        this.hideInstruction(); // Hide any remaining instruction
 
         // Play global voice sound
         this.playGlobalVoice(isWon);
@@ -104,19 +111,34 @@ export class GameManager {
     }
 
     showInstruction(text) {
+        if (!text) return;
         this.uiInstruction.innerText = text;
         this.uiInstruction.classList.add('visible');
+        this.uiInstructionHeader.innerText = ""; // Clear header initially
+        this.uiInstructionHeader.style.opacity = "0";
+
+        if (this.instructionTimeout) clearTimeout(this.instructionTimeout);
+
+        this.instructionTimeout = setTimeout(() => {
+            // After 0.5s, hide center and show in header
+            this.uiInstruction.classList.remove('visible');
+            this.uiInstructionHeader.innerText = text;
+            this.uiInstructionHeader.style.opacity = "1";
+        }, 500);
     }
 
     hideInstruction() {
         this.uiInstruction.classList.remove('visible');
+        this.uiInstructionHeader.innerText = "";
+        this.uiInstructionHeader.style.opacity = "0";
+        if (this.instructionTimeout) clearTimeout(this.instructionTimeout);
     }
 
     loop(timestamp) {
         const dt = (timestamp - this.lastTime) / 1000;
         this.lastTime = timestamp;
 
-        if (this.currentGame && this.currentGame.isActive) {
+        if (this.currentGame) {
             this.currentGame.update(dt);
             this.currentGame.draw();
 
@@ -125,9 +147,13 @@ export class GameManager {
                 this.uiTimer.innerText = Math.ceil(this.currentGame.timeLeft);
             }
         } else {
-            // Idle screen or transition
-            this.ctx.fillStyle = '#222';
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            // Idle screen: don't clear immediateley if we want to see the last result
+            // Clear only if no instruction is visible or after a long idle?
+            // For now, let's just make sure we don't clear if an instruction like "GAGNÉ" is up
+            if (!this.uiInstruction.classList.contains('visible')) {
+                this.ctx.fillStyle = '#222';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            }
         }
 
         requestAnimationFrame(this.loop);

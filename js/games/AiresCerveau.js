@@ -15,10 +15,30 @@ export class AiresCerveau extends MiniGame {
         // 4 Zones: TL, TR, BL, BR
 
         this.zones = [
-            { id: 0, x: 0, y: 0, w: cx, h: cy }, // TL
-            { id: 1, x: cx, y: 0, w: 800 - cx, h: cy }, // TR
-            { id: 2, x: 0, y: cy, w: cx, h: 600 - cy }, // BL
-            { id: 3, x: cx, y: cy, w: 800 - cx, h: 600 - cy } // BR
+            {
+                id: 0, color: "blue", polygon: [
+                    [180, 20], [300, 10], [450, 15], [580, 25], [620, 80], [600, 130],
+                    [500, 150], [400, 170], [300, 160], [200, 140], [160, 80]
+                ]
+            },   // Top (Bloby)
+            {
+                id: 1, color: "red", polygon: [
+                    [300, 200], [450, 210], [530, 300], [500, 420], [400, 450],
+                    [280, 430], [220, 350], [250, 250]
+                ]
+            },  // Center (Bloby)
+            {
+                id: 2, color: "orange", isMulti: true, areas: [
+                    { polygon: [[20, 280], [150, 300], [180, 450], [140, 560], [30, 540]] }, // Left bloby
+                    { polygon: [[620, 280], [770, 300], [790, 450], [750, 560], [640, 540]] } // Right bloby
+                ]
+            },
+            {
+                id: 3, color: "purple", polygon: [
+                    [50, 480], [300, 460], [550, 470], [750, 490], [780, 580],
+                    [600, 595], [400, 590], [150, 595], [30, 570]
+                ]
+            } // Bottom (Bloby)
         ];
 
         this.targetZoneIndex = 0;
@@ -46,8 +66,18 @@ export class AiresCerveau extends MiniGame {
         this.canvas.addEventListener('mousedown', this.handleDown);
         window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mouseup', this.handleUp);
+    }
 
-        this.showInstruction("GRATTE LA ZONE ROUGE !");
+    isPointInPolygon(point, polygon) {
+        let x = point[0], y = point[1];
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            let xi = polygon[i][0], yi = polygon[i][1];
+            let xj = polygon[j][0], yj = polygon[j][1];
+            let intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
     }
 
     handleDown(e) {
@@ -71,10 +101,14 @@ export class AiresCerveau extends MiniGame {
             const mouseY = e.clientY - rect.top;
 
             const z = this.zones[this.targetZoneIndex];
+            let inZone = false;
+            if (z.isMulti) {
+                inZone = z.areas.some(a => this.isPointInPolygon([mouseX, mouseY], a.polygon));
+            } else {
+                inZone = this.isPointInPolygon([mouseX, mouseY], z.polygon);
+            }
 
-            if (mouseX > z.x && mouseX < z.x + z.w &&
-                mouseY > z.y && mouseY < z.y + z.h) {
-
+            if (inZone) {
                 if (!this.scratchSound) {
                     this.scratchSound = this.playSound('Son/SFX/AireCerveau/scratch.mp3', true);
                 }
@@ -122,20 +156,25 @@ export class AiresCerveau extends MiniGame {
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
 
-        // Draw Cross (Black lines)
-        const cx = 350; const cy = 200;
-        this.ctx.strokeStyle = "rgba(0,0,0,0.5)";
-        this.ctx.lineWidth = 5;
-        this.ctx.beginPath();
-        this.ctx.moveTo(cx, 0); this.ctx.lineTo(cx, 600);
-        this.ctx.moveTo(0, cy); this.ctx.lineTo(800, cy);
-        this.ctx.stroke();
-
-        // Highlight Target Zone (Red)
+        // Highlight Target Zone
         if (!this.isWon) {
             const z = this.zones[this.targetZoneIndex];
-            this.ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
-            this.ctx.fillRect(z.x, z.y, z.w, z.h);
+            this.ctx.fillStyle = "rgba(255, 255, 0, 0.3)"; // Yellow highlight for any zone to be clear
+            if (z.isMulti) {
+                z.areas.forEach(a => {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(a.polygon[0][0], a.polygon[0][1]);
+                    a.polygon.forEach(p => this.ctx.lineTo(p[0], p[1]));
+                    this.ctx.closePath(); // Close the path to fill correctly
+                    this.ctx.fill();
+                });
+            } else {
+                this.ctx.beginPath();
+                this.ctx.moveTo(z.polygon[0][0], z.polygon[0][1]);
+                z.polygon.forEach(p => this.ctx.lineTo(p[0], p[1]));
+                this.ctx.closePath(); // Close the path to fill correctly
+                this.ctx.fill();
+            }
         }
 
         if (this.isRubbing && !this.isWon) {
@@ -145,8 +184,14 @@ export class AiresCerveau extends MiniGame {
 
             // Visual feedback
             const z = this.zones[this.targetZoneIndex];
-            if (lastX > z.x && lastX < z.x + z.w &&
-                lastY > z.y && lastY < z.y + z.h) {
+            let inZone = false;
+            if (z.isMulti) {
+                inZone = z.areas.some(a => this.isPointInPolygon([lastX, lastY], a.polygon));
+            } else {
+                inZone = this.isPointInPolygon([lastX, lastY], z.polygon);
+            }
+
+            if (inZone) {
                 this.ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
                 this.ctx.beginPath();
                 this.ctx.arc(lastX, lastY, 10, 0, Math.PI * 2);
@@ -155,12 +200,10 @@ export class AiresCerveau extends MiniGame {
         }
 
         super.draw();
+    }
 
-        if (this.isWon) {
-            this.ctx.fillStyle = "white";
-            this.ctx.font = "40px Arial";
-            this.ctx.fillText("ZZZZzzzz....", 300, 300);
-        }
+    getInstruction() {
+        return "ENDORS !";
     }
 
     cleanup() {

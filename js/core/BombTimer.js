@@ -25,7 +25,7 @@ export class BombTimer {
         this.container.classList.remove('exploded');
         this.container.classList.remove('tension-low');
 
-        const segmentCount = Math.ceil(newDuration) - 1;
+        const segmentCount = Math.floor(newDuration) - 1;
 
         this.fuseSegmentsContainer.innerHTML = '';
         this.segments = [];
@@ -72,7 +72,7 @@ export class BombTimer {
     }
 
     updateVisuals() {
-        if (this.duration === 0) return;
+        if (this.duration <= 0) return;
 
         const progress = this.timeRemaining / this.duration;
         const totalSegments = this.segments.length; // 4
@@ -84,7 +84,7 @@ export class BombTimer {
         // 0.1 segments becomes 1 segment.
         // 0 segments is explosion.
 
-        const visibleSegmentsCount = Math.ceil(progress * totalSegments);
+        const visibleSegmentsCount = Math.min(totalSegments, Math.floor(this.timeRemaining));
 
         // Update Visibility
         // DOM Order: seg-4 (Index 0), seg-3 (1), seg-2 (2), seg-1 (3)
@@ -126,8 +126,7 @@ export class BombTimer {
     }
 
     handleTension() {
-        const progress = this.timeRemaining / this.duration;
-        if (progress < 0.25 && !this.container.classList.contains('tension-low')) {
+        if (this.timeRemaining <= 1.0 && !this.container.classList.contains('tension-low')) {
             this.container.classList.add('tension-low');
         }
     }

@@ -34,10 +34,7 @@ export class BearTime extends MiniGame {
 
         this.currentImg = this.imgs[Math.floor(Math.random() * this.imgs.length)];
 
-        window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mousedown', this.handleClick);
-
-        this.showInstruction("CHUT !");
         this.playSound('Son/SFX/Beartime/soundtrack.mp3', true);
     }
 
@@ -96,24 +93,30 @@ export class BearTime extends MiniGame {
             // V4: Background box for text
             this.ctx.textAlign = "center";
             const text = "JE T'AIME";
-            this.ctx.font = "bold 60px Arial";
+            this.ctx.font = "bold 80px Arial";
             const tw = this.ctx.measureText(text).width;
 
-            this.ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-            this.ctx.fillRect(this.canvas.width / 2 - tw / 2 - 20, this.canvas.height / 2 - 60, tw + 40, 80);
+            // Pulsing highlight
+            const pulse = 0.8 + Math.sin(Date.now() / 100) * 0.2;
+            this.ctx.fillStyle = `rgba(0, 255, 100, ${0.5 * pulse})`;
+            this.ctx.fillRect(this.canvas.width / 2 - tw / 2 - 40, this.canvas.height / 2 - 70, tw + 80, 100);
 
-            this.ctx.fillStyle = "lime";
-            this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+            this.ctx.fillStyle = "#00ff00"; // Green text
+            this.ctx.strokeStyle = "#006600";
+            this.ctx.lineWidth = 4;
+            this.ctx.strokeText(text, this.canvas.width / 2, this.canvas.height / 2 + 10);
+            this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2 + 10);
+            this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2 + 10);
             this.ctx.textAlign = "left";
-        } else if (this.failed) {
-            this.ctx.fillStyle = "red";
-            this.ctx.font = "50px Arial";
-            this.ctx.fillText("PERDU !", 200, 300);
         }
     }
 
     cleanup() {
-        window.removeEventListener('mousemove', this.handleMove);
-        window.removeEventListener('mousedown', this.handleClick);
+        window.removeEventListener('mousedown', this.handleInput);
+        window.removeEventListener('keydown', this.handleInput);
+    }
+
+    getInstruction() {
+        return "NE BOUGE PAS !";
     }
 }

@@ -54,6 +54,7 @@ export class Helicobiche extends MiniGame {
         window.addEventListener('keyup', this.handleKeyUp);
 
         this.showInstruction("VOLE !");
+        this.helicoSound = this.playSound('Son/SFX/Helicobiche/helico.mp3', true);
     }
 
     handleKeyDown(e) {
@@ -69,8 +70,14 @@ export class Helicobiche extends MiniGame {
     }
 
     update(dt) {
-        if (!this.isActive || this.wonTriggered) return;
+        if (!this.isActive) return;
         super.update(dt);
+        if (this.wonTriggered) return;
+
+        if (this.timeLeft <= 0) {
+            this.endGame();
+            return;
+        }
 
         this.speedX = 0;
         this.speedY = 0;
@@ -80,15 +87,6 @@ export class Helicobiche extends MiniGame {
         if (this.keys.ArrowLeft) this.speedX = -this.moveSpeed;
         if (this.keys.ArrowRight) this.speedX = this.moveSpeed;
 
-        const isMoving = this.speedX !== 0 || this.speedY !== 0;
-
-        if (isMoving && !this.helicoSound) {
-            this.helicoSound = this.playSound('Son/SFX/Helicobiche/helico.mp3', true);
-        } else if (!isMoving && this.helicoSound) {
-            this.helicoSound.pause();
-            this.helicoSound = null;
-        }
-
         this.playerX += this.speedX * dt;
         this.playerY += this.speedY * dt;
 
@@ -97,11 +95,14 @@ export class Helicobiche extends MiniGame {
 
         if (this.playerX > 680 && !this.wonTriggered) {
             this.wonTriggered = true;
+            this.speedX = 0;
+            this.speedY = 0;
             if (this.helicoSound) {
                 this.helicoSound.pause();
                 this.helicoSound = null;
             }
-            this.playSound('Son/SFX/RunBiche/win.mp3'); // Using available win sound
+            this.playSound('Son/SFX/BearFind/check.mp3');
+            // Remove timer snapping to avoid double win triggers or state issues
             this.win();
         }
     }
@@ -131,7 +132,11 @@ export class Helicobiche extends MiniGame {
             }
 
             if (player && player.complete) {
-                this.ctx.drawImage(player, this.playerX, this.playerY, 80, 60);
+                this.ctx.save();
+                this.ctx.translate(this.playerX + 40, this.playerY + 30);
+                this.ctx.scale(-1, 1); // Flip horizontally
+                this.ctx.drawImage(player, -40, -30, 80, 60);
+                this.ctx.restore();
             } else {
                 this.ctx.fillStyle = this.isDisco ? "purple" : "pink";
                 this.ctx.fillRect(this.playerX, this.playerY, 50, 50);
@@ -150,5 +155,9 @@ export class Helicobiche extends MiniGame {
     cleanup() {
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
+    }
+
+    getInstruction() {
+        return "VOLE !";
     }
 }

@@ -53,9 +53,9 @@ export class Capture extends MiniGame {
 
         if (this.cowX > 250 && this.cowX < 550) {
             this.captured = true;
-            this.stopAllSounds();
+            // Removed stopAllSounds() to keep UFO hum
             this.playSound('Son/SFX/UFO/ray.mp3');
-            this.win();
+            // Don't call this.win() yet, let the animation finish
         }
     }
 
@@ -71,9 +71,18 @@ export class Capture extends MiniGame {
         }
 
         if (this.captured) {
-            this.cowY -= 500 * dt;
-            this.cowRotation = (this.cowRotation || 0) + 10 * dt;
-            this.cowScale = Math.max(0, (this.cowScale === undefined ? 1 : this.cowScale) - 0.8 * dt);
+            // Cow stops moving horizontally exactly centered under beam (approx 325-150/2)
+            // The beam is at 400. Cow width is 150. Centered at 400 means cowX = 325.
+            this.cowX = 325;
+            if (this.cowY > 40) {
+                this.cowY -= 300 * dt;
+            }
+            this.cowRotation = (this.cowRotation || 0) + 15 * dt;
+            this.cowScale = Math.max(0, (this.cowScale === undefined ? 1 : this.cowScale) - 0.7 * dt);
+
+            if (this.cowScale <= 0.1) {
+                this.win(); // Win at the end of animation
+            }
         }
     }
 
@@ -121,5 +130,9 @@ export class Capture extends MiniGame {
     cleanup() {
         window.removeEventListener('mousedown', this.handleInput);
         window.removeEventListener('keydown', this.handleInput);
+    }
+
+    getInstruction() {
+        return "CAPTURE !";
     }
 }

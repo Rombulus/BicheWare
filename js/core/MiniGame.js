@@ -81,6 +81,19 @@ export class MiniGame {
         this.isWon = true;
     }
 
+    /**
+     * Show an instruction on screen.
+     */
+    showInstruction(text) {
+        if (this.onShowInstruction) {
+            this.onShowInstruction(text);
+        }
+    }
+
+    getInstruction() {
+        return "JOUTE !"; // Default instruction
+    }
+
     cleanup() {
         this.stopAllSounds();
         this.bombTimer.hide();

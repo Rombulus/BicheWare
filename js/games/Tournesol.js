@@ -125,8 +125,8 @@ export class Tournesol extends MiniGame {
         if (this.isWatering && !this.isWon && this.dropImg.complete) {
             this.ctx.save();
             this.ctx.translate(spoutX, spoutY + 40);
-            this.ctx.scale(1, -1); // Flip vertically
-            this.ctx.drawImage(this.dropImg, -25, -25, 50, 50);
+            this.ctx.scale(1, -1); // Flip vertically as requested
+            this.ctx.drawImage(this.dropImg, -50, -50, 100, 100);
             this.ctx.restore();
         }
 
@@ -149,5 +149,9 @@ export class Tournesol extends MiniGame {
         this.canvas.removeEventListener('mousedown', this.handleDown);
         window.removeEventListener('mousemove', this.handleMove);
         window.removeEventListener('mouseup', this.handleUp);
+    }
+
+    getInstruction() {
+        return "ARROSE !";
     }
 }
