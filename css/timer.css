@@ -6,7 +6,7 @@
     transform: translateX(-50%);
     width: 600px;
     height: 120px;
-    display: flex;
+    display: none;
     align-items: flex-end;
     justify-content: center;
     pointer-events: none;

@@ -26,9 +26,14 @@ export class Brotato extends MiniGame {
         this.player = { x: 400, y: 300, r: 150 };
         this.enemies = [];
 
-        for (let i = 0; i < 4; i++) {
-            const ex = 200 + Math.random() * 400;
-            const ey = 100 + Math.random() * 400;
+        const alienCount = 4 + Math.floor(Math.random() * 2); // 4 to 5 aliens
+        for (let i = 0; i < alienCount; i++) {
+            // Spawn aliens far from player (centered at 400, 300)
+            let ex, ey;
+            do {
+                ex = 100 + Math.random() * 600;
+                ey = 100 + Math.random() * 400;
+            } while (Math.sqrt((ex - 400) ** 2 + (ey - 300) ** 2) < 250);
 
             this.enemies.push({
                 x: ex,
@@ -39,7 +44,6 @@ export class Brotato extends MiniGame {
         }
 
         window.addEventListener('mousemove', this.handleMove);
-        this.showInstruction("FONCE DEDANS !");
         this.playSound('Son/SFX/Brotato/ost.mp3', true);
     }
 
@@ -110,6 +114,10 @@ export class Brotato extends MiniGame {
         }
 
         super.draw();
+    }
+
+    getInstruction() {
+        return "FONCE DEDANS !";
     }
 
     cleanup() {

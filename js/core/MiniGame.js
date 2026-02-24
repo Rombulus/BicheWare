@@ -72,6 +72,15 @@ export class MiniGame {
         this.stopAllSounds();
         this.bombTimer.StopTimer();
 
+        if (this.isWon) {
+            this.bombTimer.hide();
+        } else {
+            // Keep timer visible for explosion animation
+            setTimeout(() => {
+                if (!this.isActive) this.bombTimer.hide();
+            }, 600);
+        }
+
         if (this.onGameEnd) {
             this.onGameEnd(this.isWon);
         }

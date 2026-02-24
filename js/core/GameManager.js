@@ -14,9 +14,37 @@ export class GameManager {
         // Game Loop State
         this.playedGames = new Set();
         this.isLooping = false;
+        this.score = 0;
+        this.lives = 4;
+        this.isTransitioning = false;
 
+        // Transition UI
+        this.uiTransition = document.getElementById('transition-screen');
+        this.uiScore = document.getElementById('score-display');
+        this.uiLives = document.getElementById('lives-container');
+        this.uiBiche = document.getElementById('biche-runner');
+
+        this.initLivesUI();
         this.loop = this.loop.bind(this);
         requestAnimationFrame(this.loop);
+    }
+
+    initLivesUI() {
+        this.uiLives.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const life = document.createElement('div');
+            life.classList.add('life-icon');
+            this.uiLives.appendChild(life);
+        }
+    }
+
+    updateLivesUI() {
+        const icons = this.uiLives.querySelectorAll('.life-icon');
+        icons.forEach((icon, index) => {
+            if (index >= this.lives) {
+                icon.classList.add('lost');
+            }
+        });
     }
 
     registerGame(name, gameClass) {
@@ -52,19 +80,23 @@ export class GameManager {
             instr = this.currentGame.getInstruction();
         }
 
-        // Show once, wait for slide, THEN start game
+        // Show instruction only once from GameManager
         this.showInstruction(instr);
 
         setTimeout(() => {
             if (this.currentGame && !this.currentGame.isActive) {
                 this.currentGame.start();
             }
-        }, 1000);
+        }, 0);
     }
 
     startRandomLoop() {
         this.isLooping = true;
+        this.score = 0;
+        this.lives = 4;
         this.playedGames.clear();
+        this.initLivesUI();
+        this.uiTransition.classList.remove('game-over');
         this.nextRandomGame();
     }
 
@@ -72,9 +104,9 @@ export class GameManager {
         const available = Object.keys(this.games).filter(name => !this.playedGames.has(name));
 
         if (available.length === 0) {
-            console.log("All games played!");
-            this.isLooping = false;
-            this.showInstruction("BRAVO ! FIN DE LA BICHE.");
+            console.log("All games played! Resetting list to keep going...");
+            this.playedGames.clear();
+            this.nextRandomGame();
             return;
         }
 
@@ -86,17 +118,55 @@ export class GameManager {
 
     handleGameEnd(isWon) {
         console.log(`Mini-game finished. Won: ${isWon}`);
-        this.hideInstruction(); // Hide any remaining instruction
+        this.hideInstruction();
 
-        // Play global voice sound
+        if (isWon) {
+            this.score++;
+        } else {
+            this.lives--;
+        }
+
         this.playGlobalVoice(isWon);
 
-        // Wait 1 second before next action
         setTimeout(() => {
-            if (this.isLooping) {
-                this.nextRandomGame();
+            if (this.lives <= 0) {
+                this.gameOver();
+            } else if (this.isLooping) {
+                this.showTransition(() => this.nextRandomGame());
             }
         }, 1000);
+    }
+
+    showTransition(onComplete) {
+        this.isTransitioning = true;
+        this.uiTransition.style.display = 'block';
+        this.uiScore.innerText = this.score;
+        this.updateLivesUI();
+
+        // Start Biche animation
+        this.uiBiche.classList.remove('biche-running');
+        void this.uiBiche.offsetWidth; // Trigger reflow
+        this.uiBiche.classList.add('biche-running');
+
+        setTimeout(() => {
+            this.uiTransition.style.display = 'none';
+            this.uiBiche.classList.remove('biche-running');
+            this.isTransitioning = false;
+            if (onComplete) onComplete();
+        }, 2000);
+    }
+
+    gameOver() {
+        this.isLooping = false;
+        this.uiTransition.style.display = 'block';
+        this.uiTransition.classList.add('game-over');
+        this.uiScore.innerText = this.score;
+        this.updateLivesUI();
+
+        // Show restart button or just allow manual reload
+        setTimeout(() => {
+            window.location.reload();
+        }, 5000);
     }
 
     playGlobalVoice(isWon) {
@@ -112,23 +182,34 @@ export class GameManager {
 
     showInstruction(text) {
         if (!text) return;
+
+        // Reset state
         this.uiInstruction.innerText = text;
+        this.uiInstruction.classList.remove('slide-up');
         this.uiInstruction.classList.add('visible');
-        this.uiInstructionHeader.innerText = ""; // Clear header initially
+
+        // Clear header initially to avoid double display
         this.uiInstructionHeader.style.opacity = "0";
+        this.uiInstructionHeader.innerText = "";
 
         if (this.instructionTimeout) clearTimeout(this.instructionTimeout);
 
         this.instructionTimeout = setTimeout(() => {
-            // After 0.5s, hide center and show in header
+            // Slide up and fade out center
+            this.uiInstruction.classList.add('slide-up');
             this.uiInstruction.classList.remove('visible');
-            this.uiInstructionHeader.innerText = text;
-            this.uiInstructionHeader.style.opacity = "1";
-        }, 500);
+
+            // Sync with header after transition
+            setTimeout(() => {
+                this.uiInstructionHeader.innerText = text;
+                this.uiInstructionHeader.style.opacity = "1";
+            }, 300);
+        }, 600);
     }
 
     hideInstruction() {
         this.uiInstruction.classList.remove('visible');
+        this.uiInstruction.classList.remove('slide-up');
         this.uiInstructionHeader.innerText = "";
         this.uiInstructionHeader.style.opacity = "0";
         if (this.instructionTimeout) clearTimeout(this.instructionTimeout);

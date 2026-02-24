@@ -44,7 +44,6 @@ export class Capture extends MiniGame {
         window.addEventListener('mousedown', this.handleInput);
         window.addEventListener('keydown', this.handleInput);
 
-        this.showInstruction("CAPTURE !");
         this.playSound('Son/SFX/UFO/ufo.mp3', true);
     }
 

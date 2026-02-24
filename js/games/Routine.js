@@ -37,7 +37,6 @@ export class Routine extends MiniGame {
         window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mousedown', this.handleClick);
 
-        this.showInstruction("APPLIQUE !");
     }
 
     pickZone() {
@@ -134,8 +133,7 @@ export class Routine extends MiniGame {
         ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
     }
 
-    cleanup() {
-        window.removeEventListener('mousemove', this.handleMove);
-        window.removeEventListener('mousedown', this.handleClick);
+    getInstruction() {
+        return "APPLIQUE !";
     }
 }

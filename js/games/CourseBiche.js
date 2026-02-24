@@ -45,7 +45,6 @@ export class CourseBiche extends MiniGame {
 
         window.addEventListener('keydown', this.handleKeyDown);
 
-        this.showInstruction("ALTERNE !");
         this.playSound('Son/SFX/RunBiche/crowd.mp3', true);
     }
 

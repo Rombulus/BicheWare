@@ -53,7 +53,6 @@ export class Helicobiche extends MiniGame {
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
 
-        this.showInstruction("VOLE !");
         this.helicoSound = this.playSound('Son/SFX/Helicobiche/helico.mp3', true);
     }
 

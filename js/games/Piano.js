@@ -49,7 +49,6 @@ export class Piano extends MiniGame {
             this.playTargetNote();
         }, 500);
 
-        this.showInstruction("JOUE LA NOTE !");
     }
 
     playTargetNote() {

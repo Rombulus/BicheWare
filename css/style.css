@@ -76,7 +76,7 @@ canvas {
     text-shadow: 3px 3px 0 #000;
     text-align: center;
     opacity: 0;
-    transition: opacity 0.3s, top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: opacity 0.2s, top 0.4s cubic-bezier(0.1, 0.7, 0.1, 1), font-size 0.4s;
     z-index: 1001;
     white-space: nowrap;
 }
@@ -85,9 +85,10 @@ canvas {
     opacity: 1;
 }
 
-#instruction.top-inset {
-    top: 60px;
+#instruction.slide-up {
+    top: 50px;
     font-size: 24px;
+    opacity: 0;
 }
 
 /* Dev Tools Styling */

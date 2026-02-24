@@ -19,8 +19,12 @@ export class Pied extends MiniGame {
         super.start();
         console.log("Pied Start V3");
         this.clicks = 0;
+        this.target = {
+            x: 150 + Math.random() * 500,
+            y: 100 + Math.random() * 400,
+            r: 80
+        };
         this.canvas.addEventListener('mousedown', this.handleClick);
-        this.showInstruction("MASSE !");
     }
 
     handleClick(e) {
@@ -71,7 +75,7 @@ export class Pied extends MiniGame {
         // V3: Removed text
     }
 
-    cleanup() {
-        this.canvas.removeEventListener('mousedown', this.handleClick);
+    getInstruction() {
+        return "MASSE !";
     }
 }

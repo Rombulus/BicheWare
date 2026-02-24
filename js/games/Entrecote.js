@@ -34,6 +34,9 @@ export class Entrecote extends MiniGame {
         super.start();
         console.log("Entrecote Start V7 - Final");
 
+        const timerContainer = document.getElementById('bomb-timer-container');
+        if (timerContainer) timerContainer.style.display = 'none';
+
         this.state = 'waiting';
         this.timer = 0;
         this.waitTime = 1.0 + Math.random() * 2.0;
@@ -42,16 +45,23 @@ export class Entrecote extends MiniGame {
 
         // Dynamic positioning
         this.startX = this.canvas.width;
-        this.targetX = this.canvas.width - 126; // V5: Shifted 6px left (was 120)
+        this.targetX = this.canvas.width - 150; // V5: Shifted left (was 126)
 
 
         this.currentItem = null;
         this.itemX = this.startX;
 
         this.canvas.addEventListener('mousedown', this.handleClick);
-        this.showInstruction("ATTENDS !");
         this.playSound('Son/SFX/Entrecote/fond.mp3', true);
     }
+
+    cleanup() {
+        super.cleanup();
+        const timerContainer = document.getElementById('bomb-timer-container');
+        if (timerContainer) timerContainer.style.display = 'flex';
+        this.canvas.removeEventListener('mousedown', this.handleClick);
+    }
+
 
     handleClick(e) {
         if (!this.isActive || this.state !== 'showing') return;
@@ -150,18 +160,14 @@ export class Entrecote extends MiniGame {
                 this.ctx.restore();
             }
         } else if (this.state === 'finished') {
-            if (this.isWon) {
-                this.ctx.fillStyle = "lime";
-                this.ctx.font = "bold 60px Arial";
-                this.ctx.fillText("MIAM !", this.canvas.width / 2 - 100, 300);
-            }
+            // "MIAM !" removed per user request
         }
 
         // V6: super.draw() called again to show the timer!
         super.draw();
     }
 
-    cleanup() {
-        this.canvas.removeEventListener('mousedown', this.handleClick);
+    getInstruction() {
+        return "APPELLE LE SERVEUR";
     }
 }

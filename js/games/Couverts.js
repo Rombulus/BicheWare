@@ -45,7 +45,6 @@ export class Couverts extends MiniGame {
         window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mouseup', this.handleUp);
 
-        this.showInstruction("RANGE TOUT !");
         this.playSound('Son/SFX/Couverts/couverts.mp3', true);
         this.playSound('Son/SFX/Entrecote/fond.mp3', true); // Re-using restaurant background sound
     }
@@ -125,9 +124,7 @@ export class Couverts extends MiniGame {
         super.draw();
     }
 
-    cleanup() {
-        this.canvas.removeEventListener('mousedown', this.handleDown);
-        window.removeEventListener('mousemove', this.handleMove);
-        window.removeEventListener('mouseup', this.handleUp);
+    getInstruction() {
+        return "RANGE TOUT !";
     }
 }

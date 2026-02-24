@@ -182,6 +182,8 @@ export class Liste extends MiniGame {
         window.removeEventListener('mouseup', this.handleUp);
     }
 
+
+
     getInstruction() {
         return "FAIS UNE LISTE !";
     }

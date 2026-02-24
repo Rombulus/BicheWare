@@ -35,7 +35,6 @@ export class GratteFizz extends MiniGame {
         window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mouseup', this.handleUp);
 
-        this.showInstruction("GRATTE ENCORE PLUS !");
     }
 
     handleDown(e) {
@@ -146,9 +145,7 @@ export class GratteFizz extends MiniGame {
         ctx.drawImage(img, cx, cy, cw, ch, x, y, w, h);
     }
 
-    cleanup() {
-        this.canvas.removeEventListener('mousedown', this.handleDown);
-        window.removeEventListener('mousemove', this.handleMove);
-        window.removeEventListener('mouseup', this.handleUp);
+    getInstruction() {
+        return "GRATTE !";
     }
 }

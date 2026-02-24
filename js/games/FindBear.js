@@ -52,8 +52,10 @@ export class FindBear extends MiniGame {
 
         this.objects.sort(() => Math.random() - 0.5);
 
+        this.flashColor = null;
+        this.flashTimer = 0;
+
         this.canvas.addEventListener('mousedown', this.handleClick);
-        this.showInstruction("TROUVE L'OURS !");
         const bgm = this.playSound('Son/SFX/BearFind/musique.mp3', true);
         if (bgm) bgm.volume = 1.0; // Ensure max volume
     }
@@ -71,23 +73,37 @@ export class FindBear extends MiniGame {
                 if (obj.isTarget) {
                     this.stopAllSounds();
                     this.playSound('Son/SFX/BearFind/check.mp3');
+                    this.triggerFlash("rgba(0, 255, 0, 0.5)");
                     this.win();
                 } else {
                     this.stopAllSounds();
                     this.playSound('Son/SFX/BearFind/wrong.mp3');
+                    this.triggerFlash("rgba(255, 0, 0, 0.5)");
                     // Delay end to allow sound to play and maintain momentum
                     setTimeout(() => {
                         this.endGame();
-                    }, 1500);
+                    }, 1000);
                 }
                 return;
             }
         }
     }
 
+    triggerFlash(color) {
+        this.flashColor = color;
+        this.flashTimer = 0.5;
+    }
+
     update(dt) {
         if (!this.isActive) return;
         super.update(dt);
+
+        if (this.flashTimer > 0) {
+            this.flashTimer -= dt;
+            if (this.flashTimer <= 0) {
+                this.flashColor = null;
+            }
+        }
     }
 
     draw() {
@@ -105,16 +121,15 @@ export class FindBear extends MiniGame {
             }
         });
 
-        super.draw();
-
-        if (this.isWon) {
-            this.ctx.fillStyle = "white";
-            this.ctx.font = "40px Arial";
-            this.ctx.fillText("TROUVÉ !", 300, 300);
+        if (this.flashColor) {
+            this.ctx.fillStyle = this.flashColor;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
+
+        super.draw();
     }
 
-    cleanup() {
-        this.canvas.removeEventListener('mousedown', this.handleClick);
+    getInstruction() {
+        return "TROUVE L'OURS !";
     }
 }
