@@ -34,7 +34,7 @@ export class Piano extends MiniGame {
 
     start() {
         super.start();
-        console.log("Piano Start V3");
+        console.log("Piano Start V4");
 
         this.canvas.addEventListener('mousedown', this.handleClick);
 
@@ -45,6 +45,11 @@ export class Piano extends MiniGame {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
 
+        // Resume immediately to avoid first note delay/glitch
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume();
+        }
+
         setTimeout(() => {
             this.playTargetNote();
         }, 500);
@@ -53,7 +58,7 @@ export class Piano extends MiniGame {
 
     playTargetNote() {
         if (!this.isActive) return;
-        this.playNote(this.keys[this.targetNoteIndex].freq, 1.0);
+        this.playNote(this.keys[this.targetNoteIndex].freq, 0.8);
     }
 
     handleClick(e) {
@@ -68,7 +73,7 @@ export class Piano extends MiniGame {
                 y > key.y && y < key.y + key.h) {
 
                 this.activeKeyIndex = key.index; // Trigger visual effect
-                this.playNote(key.freq, 0.5);
+                this.playNote(key.freq, 0.8);
 
                 setTimeout(() => { this.activeKeyIndex = -1; }, 200); // Clear effect
 
@@ -108,12 +113,12 @@ export class Piano extends MiniGame {
 
             // Piano-like envelope: Sharp attack, exponential decay
             gain.gain.setValueAtTime(0, now);
-            gain.gain.linearRampToValueAtTime(v.g, now + 0.01);
+            gain.gain.linearRampToValueAtTime(v.g, now + 0.02); // Slightly softer attack
             gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-
             osc.start(now);
             osc.stop(now + dur);
         });
+        console.log(`Playing freq: ${freq} (target index was: ${this.targetNoteIndex})`);
     }
 
     update(dt) {

@@ -7,6 +7,7 @@ export class MiniGame {
         this.isActive = false;
         this.timeLeft = 0;
         this.isWon = false;
+        this.speedMultiplier = 1.0; // Set by GameManager before start()
 
         // Audio Tracking
         this.activeSounds = [];
@@ -21,8 +22,8 @@ export class MiniGame {
     start() {
         this.isActive = true;
         this.isWon = false;
-        this.timeLeft = 5.0; // Default 5 seconds per game
-        console.log("MiniGame Started");
+        this.timeLeft = 5.0 / this.speedMultiplier; // Faster at higher speeds
+        console.log("MiniGame Started, speed:", this.speedMultiplier);
 
         // Start visual timer
         this.bombTimer.StartTimer(this.timeLeft);
@@ -53,8 +54,9 @@ export class MiniGame {
     update(dt) {
         if (!this.isActive) return;
 
-        this.timeLeft -= dt;
-        this.bombTimer.update(dt);
+        const scaledDt = dt * this.speedMultiplier;
+        this.timeLeft -= scaledDt;
+        this.bombTimer.update(scaledDt);
 
         if (this.timeLeft <= 0) {
             this.endGame();

@@ -1,32 +1,40 @@
 import { MiniGame } from '../core/MiniGame.js';
 
+/**
+ * Liste - Mini-game
+ * 
+ * Concept: A shopping list appears on a page with 2 handwritten-style items.
+ * The player must draw a line to cross off each item before time runs out.
+ * Win: Both items crossed off.
+ * Lose: Timer runs out before all items are crossed.
+ *
+ * Detection: Point-by-point. For each point in the drawn stroke, we check if it
+ * falls inside the item's hitbox. We count how many DISTINCT horizontal positions
+ * covered this zone. If coverage exceeds 35% of the item width, it's crossed.
+ */
 export class Liste extends MiniGame {
     constructor(canvas, ctx) {
         super(canvas, ctx);
+
         // Assets
         this.bg = new Image();
         this.bg.src = 'Images/Liste/page.png';
 
-        this.patterns = [
+        this.lineImgs = [
             'Images/Liste/ligne1.png',
             'Images/Liste/ligne2.png',
             'Images/Liste/ligne3.png'
-        ].map(src => { const i = new Image(); i.src = src; return i; });
+        ].map(src => {
+            const img = new Image();
+            img.src = src;
+            return img;
+        });
 
+        // Items and drawing state
         this.items = [];
         this.isDrawing = false;
-
-        // V5: Disappearing bug fix
-        // We need to store ALL lines drawn, not just current one.
-        // Actually, item.lines was handling it?
-        // "quand on essaye de dessiner sur les deux lignes du dessous, l'écriture disparaît."
-        // Maybe I was clearing the canvas incorrectly or not drawing `item.lines` properly?
-        // Or `currentLine` was interfering. 
-        // I will inspect draw loop.
-
-        this.currentLine = [];
-        this.allMarks = []; // V5: Fix Disappearing Lines & crash
-
+        this.currentStroke = [];  // points of current stroke being drawn
+        this.allStrokes = [];     // all completed strokes (for rendering)
 
         this.handleDown = this.handleDown.bind(this);
         this.handleMove = this.handleMove.bind(this);
@@ -35,145 +43,207 @@ export class Liste extends MiniGame {
 
     start() {
         super.start();
-        console.log("Liste Start V5");
+        console.log("Liste Start V7 - Rewrite");
         this.timeLeft = 8.0;
 
-        this.itemNames = ["Lisse", "Biche"];
-        this.items = [
-            { id: 1, w: 400, h: 50, crossed: false, lines: [], img: this.patterns[0] },
-            { id: 2, w: 400, h: 50, crossed: false, lines: [], img: this.patterns[1] }
+        // Reset drawing state
+        this.currentStroke = [];
+        this.allStrokes = [];
+
+        // Pick 2 distinct random line images
+        const indices = [0, 1, 2];
+        indices.sort(() => Math.random() - 0.5);
+        const chosen = [indices[0], indices[1]];
+
+        // Place items on the page, vertically stacked with good spacing
+        // The page.png covers roughly x:120-720, y:60-870 on a 800x600 canvas
+        // (but canvas may be different; we'll use percentage-based offsets)
+        const cw = this.canvas.width;
+        const ch = this.canvas.height;
+
+        // Item dimensions: each ligne img is wide and short
+        const itemW = Math.round(cw * 0.55);
+        const itemH = 55;
+        const startX = Math.round(cw * 0.22);
+
+        // Two fixed vertical positions, well separated
+        const yPositions = [
+            Math.round(ch * 0.35),
+            Math.round(ch * 0.58)
         ];
 
-        const yPositions = [150, 250, 350];
-        yPositions.sort(() => Math.random() - 0.5);
-
-        this.items.forEach((item, index) => {
-            item.x = 200;
-            item.y = yPositions[index];
-        });
+        this.items = chosen.map((imgIdx, i) => ({
+            id: i,
+            img: this.lineImgs[imgIdx],
+            x: startX,
+            y: yPositions[i],
+            w: itemW,
+            h: itemH,
+            crossed: false
+        }));
 
         this.canvas.addEventListener('mousedown', this.handleDown);
         window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mouseup', this.handleUp);
+
+        // Play ambient sound
+        this.playSound('Son/SFX/Liste/scribe.mp3', true);
     }
 
+    // ─── Input Handlers ──────────────────────────────────────────────────────
+
     handleDown(e) {
+        if (!this.isActive) return;
         this.isDrawing = true;
-        this.currentLine = [];
+        this.currentStroke = [];
         this.addPoint(e);
     }
 
     handleMove(e) {
-        if (this.isDrawing) {
-            this.addPoint(e);
-        }
+        if (!this.isActive || !this.isDrawing) return;
+        this.addPoint(e);
     }
 
-    handleUp() {
+    handleUp(e) {
+        if (!this.isActive) return;
         this.isDrawing = false;
-        // Verify crossings for current line
-        this.checkCrossings();
 
-        // V5: Fix Disappearing Lines
-        if (this.currentLine.length > 1) {
-            this.allMarks.push([...this.currentLine]);
+        // Commit the stroke
+        if (this.currentStroke.length > 1) {
+            this.allStrokes.push([...this.currentStroke]);
         }
-        this.currentLine = [];
+
+        // Check if any item is now crossed by this stroke
+        this.checkCrossings(this.currentStroke);
+        this.currentStroke = [];
+
+        // Immediately win if all items crossed
+        if (this.items.every(item => item.crossed)) {
+            this.win();
+            this.endGame();
+        }
     }
 
     addPoint(e) {
         const rect = this.canvas.getBoundingClientRect();
-        this.currentLine.push({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        this.currentStroke.push({
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY
         });
     }
 
-    checkCrossings() {
-        if (this.currentLine.length < 2) return;
+    // ─── Crossing Detection ───────────────────────────────────────────────────
 
-        // V5: Save this line permanently to items it touches OR global?
-        // User complained "writing disappears".
-        // Let's attach to the closest item or just keep a global "marks" array.
-        // Global is safer.
+    /**
+     * Checks whether the given stroke crosses each uncrossed item.
+     * Strategy: count how many unique x-columns (rounded to nearest 5px) of
+     * the item's rect are touched by any stroke point that is also in the item's
+     * y-range. If the covered width >= 30% of the item width, it's crossed.
+     */
+    checkCrossings(stroke) {
+        if (stroke.length < 2) return;
 
-        const minX = Math.min(...this.currentLine.map(p => p.x));
-        const maxX = Math.max(...this.currentLine.map(p => p.x));
-        const minY = Math.min(...this.currentLine.map(p => p.y));
-        const maxY = Math.max(...this.currentLine.map(p => p.y));
+        for (const item of this.items) {
+            if (item.crossed) continue;
 
-        let logicApplied = false;
-        this.items.forEach(item => {
-            // Check overlap
-            if (minX < item.x + item.w && maxX > item.x &&
-                minY < item.y + item.h && maxY > item.y) {
+            // Generous ±40px vertical hitbox
+            const yTop = item.y - 40;
+            const yBottom = item.y + item.h + 40;
 
-                const widthCovered = Math.min(maxX, item.x + item.w) - Math.max(minX, item.x);
-                if (widthCovered > item.w * 0.4) {
-                    item.crossed = true;
+            const xColumns = new Set();
+
+            for (const pt of stroke) {
+                if (pt.y >= yTop && pt.y <= yBottom &&
+                    pt.x >= item.x - 10 && pt.x <= item.x + item.w + 10) {
+                    // Bucket into 5px columns
+                    xColumns.add(Math.round(pt.x / 5) * 5);
                 }
-
-                // Store line on item for rendering (or just keep global?)
-                item.lines.push([...this.currentLine]);
-                logicApplied = true;
             }
-        });
 
-        // If line didn't touch anything relevant, maybe store it on background?
-        // For simplicity, let's just use item lines. If user misses, line might disappear?
-        // That explains the bug.
-        // Fix: Use global lines array.
-    }
-
-    update(dt) {
-        if (!this.isActive) return;
-        super.update(dt);
-
-        if (this.timeLeft <= 0 && !this.isWon) {
-            // Check win exactly when timer ends
-            if (this.items.every(i => i.crossed)) {
-                this.win();
-            } else {
-                this.endGame();
+            // Each bucket is ~5px wide; require only 20% coverage
+            const coveredPx = xColumns.size * 5;
+            const coveragePct = coveredPx / item.w;
+            console.log(`Liste: item ${item.id} coverage=${Math.round(coveragePct * 100)}% (${coveredPx}px / ${item.w}px)`);
+            if (coveragePct >= 0.20) {
+                item.crossed = true;
+                console.log(`Liste: item ${item.id} CROSSED!`);
             }
         }
     }
+
+    // ─── Update ───────────────────────────────────────────────────────────────
+
+    update(dt) {
+        if (!this.isActive || this.isWon) return;
+
+        // Manually decrement timer with speed applied (NOT via super to avoid double endGame)
+        const scaledDt = dt * this.speedMultiplier;
+        this.timeLeft -= scaledDt;
+        this.bombTimer.update(scaledDt);
+
+        if (this.timeLeft <= 0) {
+            // Do ONE final cross check before ending
+            this.checkCrossings(this.currentStroke);
+
+            if (this.items.every(item => item.crossed)) {
+                this.win();
+            }
+            this.endGame(); // called exactly once
+        }
+    }
+
+    // ─── Draw ─────────────────────────────────────────────────────────────────
 
     draw() {
         if (!this.isActive) return;
 
+        // Background page
         if (this.bg.complete) {
             this.ctx.drawImage(this.bg, 0, 0, this.canvas.width, this.canvas.height);
         }
 
-        this.items.forEach(item => {
+        // Draw items (list lines)
+        for (const item of this.items) {
             if (item.img.complete) {
-                this.ctx.drawImage(item.img, item.x, item.y - 15, item.w, 80);
+                this.ctx.drawImage(item.img, item.x, item.y, item.w, item.h);
             }
-        });
-
-        // Drawn lines
-        this.ctx.strokeStyle = "rgba(0,0,0,0.8)";
-        this.ctx.lineWidth = 15;
-        this.ctx.lineCap = "round";
-        this.ctx.beginPath();
-
-        // Draw ALL stored lines
-        this.allMarks.forEach(line => {
-            if (line.length < 2) return;
-            this.ctx.moveTo(line[0].x, line[0].y);
-            for (let i = 1; i < line.length; i++) this.ctx.lineTo(line[i].x, line[i].y);
-        });
-
-        // Draw current line
-        if (this.isDrawing && this.currentLine.length > 1) {
-            this.ctx.moveTo(this.currentLine[0].x, this.currentLine[0].y);
-            for (let i = 1; i < this.currentLine.length; i++) this.ctx.lineTo(this.currentLine[i].x, this.currentLine[i].y);
         }
-        this.ctx.stroke();
+
+        // Draw all committed strokes
+        this.ctx.save();
+        this.ctx.strokeStyle = 'rgba(20, 20, 120, 0.85)';
+        this.ctx.lineWidth = 12;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+
+        for (const stroke of this.allStrokes) {
+            if (stroke.length < 2) continue;
+            this.ctx.beginPath();
+            this.ctx.moveTo(stroke[0].x, stroke[0].y);
+            for (let i = 1; i < stroke.length; i++) {
+                this.ctx.lineTo(stroke[i].x, stroke[i].y);
+            }
+            this.ctx.stroke();
+        }
+
+        // Draw current stroke in progress
+        if (this.isDrawing && this.currentStroke.length >= 2) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.currentStroke[0].x, this.currentStroke[0].y);
+            for (let i = 1; i < this.currentStroke.length; i++) {
+                this.ctx.lineTo(this.currentStroke[i].x, this.currentStroke[i].y);
+            }
+            this.ctx.stroke();
+        }
+
+        this.ctx.restore();
 
         super.draw();
     }
+
+    // ─── Cleanup ──────────────────────────────────────────────────────────────
 
     cleanup() {
         super.cleanup();
@@ -182,9 +252,7 @@ export class Liste extends MiniGame {
         window.removeEventListener('mouseup', this.handleUp);
     }
 
-
-
     getInstruction() {
-        return "FAIS UNE LISTE !";
+        return 'BARRE LA LISTE !';
     }
 }

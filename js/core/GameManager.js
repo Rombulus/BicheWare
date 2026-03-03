@@ -18,11 +18,28 @@ export class GameManager {
         this.lives = 4;
         this.isTransitioning = false;
 
+        // Speed system
+        this.speedMultiplier = 1.0;
+        this.gamesPlayedTotal = 0;
+        this.speedTier = 0; // increments every 7 games
         // Transition UI
         this.uiTransition = document.getElementById('transition-screen');
         this.uiScore = document.getElementById('score-display');
         this.uiLives = document.getElementById('lives-container');
-        this.uiBiche = document.getElementById('biche-runner');
+        this.uiSpeedUp = document.getElementById('speed-up-label');
+
+        // Elevator specific
+        this.uiElevatorContainer = document.getElementById('elevator-container');
+        this.uiElevatorBear = document.getElementById('elevator-bear');
+        this.uiLevelDisplay = document.getElementById('level-display');
+
+        // Speed system
+        this.speedMultiplier = 1.0;
+        this.gamesPlayedTotal = 0;
+        this.speedTier = 0; // increments every 7 games
+
+        this.bearFrame = 1;
+        this.bearInterval = null;
 
         this.initLivesUI();
         this.loop = this.loop.bind(this);
@@ -71,6 +88,7 @@ export class GameManager {
         }
 
         this.currentGame = new GameClass(this.canvas, this.ctx);
+        this.currentGame.speedMultiplier = this.speedMultiplier; // <-- apply speed
         this.currentGame.onGameEnd = (isWon) => this.handleGameEnd(isWon);
         this.currentGame.onShowInstruction = (text) => this.showInstruction(text);
 
@@ -126,34 +144,110 @@ export class GameManager {
             this.lives--;
         }
 
+        // Speed progression: every 7 games
+        this.gamesPlayedTotal++;
+        let didSpeedUp = false;
+        const newTier = Math.floor(this.gamesPlayedTotal / 7);
+        if (newTier > this.speedTier) {
+            this.speedTier = newTier;
+            this.speedMultiplier = Math.min(this.speedMultiplier * 1.2, 1.5);
+            didSpeedUp = true;
+            console.log(`Speed up! multiplier=${this.speedMultiplier.toFixed(2)}`);
+        }
+
         this.playGlobalVoice(isWon);
 
         setTimeout(() => {
             if (this.lives <= 0) {
                 this.gameOver();
             } else if (this.isLooping) {
-                this.showTransition(() => this.nextRandomGame());
+                this.showTransition(() => this.nextRandomGame(), didSpeedUp, isWon);
             }
         }, 1000);
     }
 
-    showTransition(onComplete) {
+    showTransition(onComplete, speedUp = false, isWon = true) {
         this.isTransitioning = true;
         this.uiTransition.style.display = 'block';
         this.uiScore.innerText = this.score;
         this.updateLivesUI();
 
-        // Start Biche animation
-        this.uiBiche.classList.remove('biche-running');
-        void this.uiBiche.offsetWidth; // Trigger reflow
-        this.uiBiche.classList.add('biche-running');
+        // Level Display Setup
+        const currentLevel = this.gamesPlayedTotal + 1;
+        this.uiLevelDisplay.innerText = currentLevel;
+        this.uiLevelDisplay.classList.remove('center', 'up');
 
-        setTimeout(() => {
+        // SPEED UP label
+        this.uiSpeedUp.classList.remove('visible');
+        if (speedUp) {
+            this.uiSpeedUp.classList.add('visible');
+        }
+
+        const doEnd = () => {
+            if (!this.isTransitioning) return;
+            this.stopBearAnimation();
             this.uiTransition.style.display = 'none';
-            this.uiBiche.classList.remove('biche-running');
+            this.uiSpeedUp.classList.remove('visible');
+            this.uiLevelDisplay.classList.remove('center', 'up');
             this.isTransitioning = false;
             if (onComplete) onComplete();
-        }, 2000);
+        };
+
+        const fallback = setTimeout(() => { if (this.isTransitioning) doEnd(); }, 12000);
+        const guardedEnd = () => { clearTimeout(fallback); doEnd(); };
+
+        // Start Level Animation Sequence
+        // 1. Slide to center
+        setTimeout(() => {
+            this.uiLevelDisplay.classList.add('center');
+        }, 50);
+
+        // 2. Play Audio & Bear Animation
+        if (isWon) {
+            this.uiElevatorBear.src = 'Images/Ascensours/ours/happy.png';
+            const audio = new Audio('Son/Musique/win.mp3');
+            audio.playbackRate = this.speedMultiplier;
+            audio.play().catch(e => console.warn('Transition music failed:', e));
+
+            audio.addEventListener('ended', () => {
+                this.uiLevelDisplay.classList.add('up');
+                setTimeout(guardedEnd, 500);
+            }, { once: true });
+        } else {
+            this.uiElevatorBear.src = 'Images/Ascensours/ours/miss.png';
+            const loosePitch = Math.max(0.7, this.speedMultiplier * 0.85);
+            const audioLoose = new Audio('Son/Musique/loose_transi.mp3');
+            audioLoose.playbackRate = loosePitch;
+            audioLoose.play().catch(e => console.warn('loose_transi failed:', e));
+
+            audioLoose.addEventListener('ended', () => {
+                this.startBearIdle();
+                const audioTransi = new Audio('Son/Musique/transi.mp3');
+                audioTransi.playbackRate = this.speedMultiplier;
+                audioTransi.play().catch(e => console.warn('transi failed:', e));
+
+                audioTransi.addEventListener('ended', () => {
+                    this.uiLevelDisplay.classList.add('up');
+                    setTimeout(guardedEnd, 500);
+                }, { once: true });
+            }, { once: true });
+        }
+    }
+
+    startBearIdle() {
+        this.stopBearAnimation();
+        this.bearFrame = 1;
+        this.bearInterval = setInterval(() => {
+            this.bearFrame = (this.bearFrame % 3) + 1;
+            this.uiElevatorBear.src = `Images/Ascensours/ours/frame ${this.bearFrame}.png`;
+        }, 150 / this.speedMultiplier);
+    }
+
+    stopBearAnimation() {
+        if (this.bearInterval) {
+            clearInterval(this.bearInterval);
+            this.bearInterval = null;
+        }
     }
 
     gameOver() {
@@ -170,13 +264,15 @@ export class GameManager {
     }
 
     playGlobalVoice(isWon) {
-        const folder = isWon ? 'clear' : 'lost';
-        const sounds = isWon
-            ? ['Biche.mp3', 'Wow.mp3', 'Yeah.mp3']
-            : ['nice try.mp3', 'oh no.mp3', 'too bad.mp3'];
-
-        const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
-        const audio = new Audio(`Son/Voix/${folder}/${randomSound}`);
+        let src;
+        if (isWon) {
+            // Always play Biche.mp3 on win
+            src = 'Son/Voix/clear/Biche.mp3';
+        } else {
+            const sounds = ['nice try.mp3', 'oh no.mp3', 'too bad.mp3'];
+            src = `Son/Voix/lost/${sounds[Math.floor(Math.random() * sounds.length)]}`;
+        }
+        const audio = new Audio(src);
         audio.play().catch(e => console.warn("Global voice failed:", e));
     }
 

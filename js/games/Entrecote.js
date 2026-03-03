@@ -72,20 +72,18 @@ export class Entrecote extends MiniGame {
 
         if (mx > this.itemX && mx < this.itemX + 300 && my > this.itemY && my < this.itemY + 300) {
             if (this.currentItem.type === 'waiter') {
-                this.win(); // V6: Only way to win
+                this.win();
                 this.state = 'finished';
+                this.endGame();
             } else {
-                this.state = 'finished'; // Missed (but time keeps running? or Fail?)
-                // User said: "La condition de victoire se fait par le fait de cliquer sur le bon trigger."
-                // So clicking wrong = nothing? or fail?
-                // Let's assume clicking bandit = fail.
+                this.state = 'finished';
                 this.endGame();
             }
         }
     }
 
     update(dt) {
-        if (!this.isActive) return;
+        if (!this.isActive || this.state === 'finished') return;
         // V6: Do NOT call super.update(dt) to avoid time decrement? 
         // Or call it but reset time.
         // super.update handles win checking logic if we use flags.

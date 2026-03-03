@@ -1,4 +1,4 @@
-/* WarioWare Transition Styles */
+/* Elevator Transition Styles */
 #transition-screen {
     position: absolute;
     top: 50%;
@@ -6,77 +6,152 @@
     transform: translate(-50%, -50%);
     width: 800px;
     height: 600px;
-    background-color: #f1c40f;
-    /* Iconic yellow */
+    background-color: #000;
     display: none;
-    /* Hidden by default */
     z-index: 2000;
     overflow: hidden;
     border: 4px solid #fff;
 }
 
-#transition-bg {
-    position: absolute;
-    width: 200%;
+#elevator-container {
+    position: relative;
+    width: 100%;
     height: 100%;
-    background: repeating-linear-gradient(45deg,
-            #f1c40f,
-            #f1c40f 40px,
-            #f39c12 40px,
-            #f39c12 80px);
-    animation: bg-slide 2s linear infinite;
 }
 
-@keyframes bg-slide {
-    from {
-        transform: translateX(0);
-    }
+#elevator-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url('../Images/Ascensours/ascensours_bg.png');
+    background-size: cover;
+    z-index: 1;
+}
 
-    to {
-        transform: translateX(-80px);
-    }
+#elevator-doors {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.door {
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    background-color: #444;
+    /* Fallback */
+    border: 1px solid #333;
+    transition: transform 0.5s ease-in-out;
+}
+
+.door.left {
+    left: 0;
+    transform: translateX(0);
+}
+
+.door.right {
+    right: 0;
+    transform: translateX(0);
+}
+
+.elevator-open .door.left {
+    transform: translateX(-100%);
+}
+
+.elevator-open .door.right {
+    transform: translateX(100%);
+}
+
+#elevator-panel {
+    position: absolute;
+    right: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 120px;
+    background-image: url('../Images/Ascensours/ascensours_panel.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 3;
+}
+
+#elevator-bear-container {
+    position: absolute;
+    left: 50%;
+    top: 60%;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+}
+
+#elevator-bear {
+    width: 300px;
+    height: auto;
+}
+
+#level-display {
+    position: absolute;
+    left: -100px;
+    /* Start off-screen */
+    top: 30%;
+    transform: translateY(-50%);
+    font-size: 150px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 5px 5px 0 #000;
+    z-index: 5;
+    transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        top 0.5s ease-in;
+}
+
+#level-display.center {
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#level-display.up {
+    top: -200px;
 }
 
 #score-display {
     position: absolute;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 80px;
+    top: 20px;
+    left: 20px;
+    font-size: 40px;
     font-weight: 900;
     color: #fff;
-    text-shadow: 4px 4px 0 #000;
-    z-index: 2100;
+    text-shadow: 2px 2px 0 #000;
+    z-index: 5;
 }
 
-#biche-runner {
+#speed-up-label {
     position: absolute;
-    bottom: 100px;
-    left: -200px;
-    width: 200px;
-    height: 200px;
-    background-image: url('../Images/Course/running_biche.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    z-index: 2100;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 52px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 3px 3px 0 #c00, -3px -3px 0 #c00;
+    z-index: 6;
+    display: none;
+    animation: speedup-flash 0.4s ease-in-out infinite alternate;
 }
 
-.biche-running {
-    animation: biche-run 2s linear forwards;
+#speed-up-label.visible {
+    display: block;
 }
 
-@keyframes biche-run {
-    0% {
-        left: -200px;
+@keyframes speedup-flash {
+    from {
+        transform: translateX(-50%) scale(1);
+        opacity: 1;
     }
 
-    50% {
-        left: 300px;
-        transform: scale(1.1) rotate(5deg);
-    }
-
-    100% {
-        left: 900px;
+    to {
+        transform: translateX(-50%) scale(1.1);
+        opacity: 0.8;
     }
 }
 
@@ -87,19 +162,44 @@
     transform: translateX(-50%);
     display: flex;
     gap: 15px;
-    z-index: 2100;
+    z-index: 5;
 }
 
 .life-icon {
-    width: 40px;
-    height: 40px;
-    background-image: url('../Images/Bombe/bombe.png');
+    width: 60px;
+    height: 60px;
+    background-image: url('../Images/icone biche.png');
     background-size: contain;
     background-repeat: no-repeat;
-    transition: transform 0.3s ease-out, opacity 0.3s;
+    background-position: center;
+    animation: life-bounce-flip 1.2s ease-in-out infinite;
+    transition: opacity 0.3s;
+}
+
+@keyframes life-bounce-flip {
+    0% {
+        transform: translateY(0) scaleX(1);
+    }
+
+    35% {
+        transform: translateY(-20px) scaleX(1);
+    }
+
+    50% {
+        transform: translateY(-20px) scaleX(-1);
+    }
+
+    85% {
+        transform: translateY(0) scaleX(-1);
+    }
+
+    100% {
+        transform: translateY(0) scaleX(1);
+    }
 }
 
 .life-icon.lost {
+    animation: none;
     transform: scale(0);
     opacity: 0;
 }
@@ -109,17 +209,13 @@
     background-color: #c0392b;
 }
 
-#transition-screen.game-over #transition-bg {
-    background: repeating-linear-gradient(45deg,
-            #c0392b,
-            #c0392b 40px,
-            #962d22 40px,
-            #962d22 80px);
+#transition-screen.game-over #elevator-bg {
+    filter: grayscale(0.5) sepia(0.5) hue-rotate(-50deg);
 }
 
 #transition-screen.game-over #score-display::after {
     content: 'GAME OVER';
     display: block;
-    font-size: 100px;
+    font-size: 80px;
     margin-top: 50px;
 }
