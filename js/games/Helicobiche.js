@@ -53,7 +53,7 @@ export class Helicobiche extends MiniGame {
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
 
-        this.helicoSound = this.playSound('Son/SFX/Helicobiche/helico.mp3', true);
+        this.helicoSound = null;
     }
 
     handleKeyDown(e) {
@@ -85,6 +85,15 @@ export class Helicobiche extends MiniGame {
         if (this.keys.ArrowDown) this.speedY = this.moveSpeed;
         if (this.keys.ArrowLeft) this.speedX = -this.moveSpeed;
         if (this.keys.ArrowRight) this.speedX = this.moveSpeed;
+
+        const isMoving = this.speedX !== 0 || this.speedY !== 0;
+
+        if (isMoving && !this.helicoSound) {
+            this.helicoSound = this.playSound('Son/SFX/Helicobiche/helico.mp3', true);
+        } else if (!isMoving && this.helicoSound) {
+            this.helicoSound.pause();
+            this.helicoSound = null;
+        }
 
         this.playerX += this.speedX * dt;
         this.playerY += this.speedY * dt;

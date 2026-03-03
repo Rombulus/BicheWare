@@ -5,7 +5,10 @@ export class Routine extends MiniGame {
         super(canvas, ctx);
         // Assets
         this.bg = new Image();
-        this.bg.src = 'Images/Routine/visage_biche.png';
+        this.bg.src = 'Images/Routine/fond_spa.png';
+
+        this.visage = new Image();
+        this.visage.src = 'Images/Routine/visage_biche.png';
 
         this.pipetteImg = new Image();
         this.pipetteImg.src = 'Images/Routine/pipette.png';
@@ -36,7 +39,6 @@ export class Routine extends MiniGame {
 
         window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mousedown', this.handleClick);
-
     }
 
     pickZone() {
@@ -92,6 +94,11 @@ export class Routine extends MiniGame {
         } else {
             this.ctx.fillStyle = "pink";
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        if (this.visage.complete) {
+            // Draw face overlay assuming transparent PNG or similar layout
+            this.ctx.drawImage(this.visage, 0, 0, this.canvas.width, this.canvas.height);
         }
 
         if (this.targetZone && !this.isWon) {

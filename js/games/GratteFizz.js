@@ -30,11 +30,13 @@ export class GratteFizz extends MiniGame {
         this.rubScore = 0;
         this.isRubbing = false;
         this.lastMouse = null;
+        this.pantPlayed = false;
 
         this.canvas.addEventListener('mousedown', this.handleDown);
         window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mouseup', this.handleUp);
 
+        // Placeholder for music
     }
 
     handleDown(e) {
@@ -64,6 +66,11 @@ export class GratteFizz extends MiniGame {
                 this.rubScore += dist * 0.5;
                 this.lastMouse = { x: e.clientX, y: e.clientY };
 
+                if (!this.pantPlayed && this.rubScore > this.requiredRub * 0.8) {
+                    this.pantPlayed = true;
+                    if (this.isActive) this.playSound('Son/SFX/GratteChien/pant.mp3');
+                }
+
                 if (this.rubScore > this.requiredRub) {
                     this.triggerWin();
                 }
@@ -81,12 +88,6 @@ export class GratteFizz extends MiniGame {
         }
 
         this.playSound('Son/SFX/GratteChien/success - Sound Effect (1).mp3');
-
-        setTimeout(() => {
-            if (this.isActive) {
-                this.playSound('Son/SFX/GratteChien/pant.mp3');
-            }
-        }, 1000);
     }
 
     update(dt) {

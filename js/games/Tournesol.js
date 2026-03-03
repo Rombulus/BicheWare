@@ -125,7 +125,7 @@ export class Tournesol extends MiniGame {
         if (this.isWatering && !this.isWon && this.dropImg.complete) {
             this.ctx.save();
             this.ctx.translate(spoutX, spoutY + 40);
-            this.ctx.scale(1, -1); // Flip vertically as requested
+            this.ctx.rotate(Math.PI / 4); // Aligner avec l'inclinaison de l'arrosoir
             this.ctx.drawImage(this.dropImg, -50, -50, 100, 100);
             this.ctx.restore();
         }

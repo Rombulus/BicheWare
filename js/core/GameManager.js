@@ -163,25 +163,58 @@ export class GameManager {
             } else if (this.isLooping) {
                 this.showTransition(() => this.nextRandomGame(), didSpeedUp, isWon);
             }
-        }, 1000);
+        }, 100);
     }
 
     showTransition(onComplete, speedUp = false, isWon = true) {
         this.isTransitioning = true;
         this.uiTransition.style.display = 'block';
+        this.uiTransition.classList.remove('elevator-zoom'); // Reset zoom
         this.uiScore.innerText = this.score;
         this.updateLivesUI();
 
-        // Level Display Setup
+        // Level Display
         const currentLevel = this.gamesPlayedTotal + 1;
         this.uiLevelDisplay.innerText = currentLevel;
         this.uiLevelDisplay.classList.remove('center', 'up');
 
-        // SPEED UP label
+        // SPEED UP
         this.uiSpeedUp.classList.remove('visible');
-        if (speedUp) {
-            this.uiSpeedUp.classList.add('visible');
-        }
+        if (speedUp) this.uiSpeedUp.classList.add('visible');
+
+        const elevatorBg = document.getElementById('elevator-bg');
+
+        // Sequences d'images
+        const closeFrames = [
+            'Images/Ascensours/cage/vide.jpg',
+            'Images/Ascensours/cage/ouvert 2.jpg',
+            'Images/Ascensours/cage/ouvert 1.jpg',
+            'Images/Ascensours/cage/full.jpg'
+        ];
+
+        const openFrames = [
+            'Images/Ascensours/cage/full.jpg',
+            'Images/Ascensours/cage/ouvert 1.jpg',
+            'Images/Ascensours/cage/ouvert 2.jpg',
+            'Images/Ascensours/cage/vide.jpg'
+        ];
+
+        // Ensure UI elements are hidden until closed
+        this.uiElevatorBear.style.opacity = 0;
+        this.uiScore.style.opacity = 0;
+        this.uiLives.style.opacity = 0;
+
+        const animateFrames = (frames, interval, callback) => {
+            let f = 0;
+            const timer = setInterval(() => {
+                elevatorBg.style.backgroundImage = `url('${frames[f]}')`;
+                f++;
+                if (f >= frames.length) {
+                    clearInterval(timer);
+                    if (callback) callback();
+                }
+            }, interval);
+        };
 
         const doEnd = () => {
             if (!this.isTransitioning) return;
@@ -190,48 +223,101 @@ export class GameManager {
             this.uiSpeedUp.classList.remove('visible');
             this.uiLevelDisplay.classList.remove('center', 'up');
             this.isTransitioning = false;
+
+            // Start the next game!
             if (onComplete) onComplete();
         };
 
-        const fallback = setTimeout(() => { if (this.isTransitioning) doEnd(); }, 12000);
-        const guardedEnd = () => { clearTimeout(fallback); doEnd(); };
+        const guardedEnd = () => { doEnd(); };
 
-        // Start Level Animation Sequence
-        // 1. Slide to center
-        setTimeout(() => {
-            this.uiLevelDisplay.classList.add('center');
-        }, 50);
+        // --- Sequence Start ---
+        // 1. Fermeture Rapide
+        animateFrames(closeFrames, 80, () => {
+            // Ascenseur fermé.
+            this.uiElevatorBear.style.opacity = 1;
+            this.uiScore.style.opacity = 1;
+            this.uiLives.style.opacity = 1;
+            setTimeout(() => { this.uiLevelDisplay.classList.add('center'); }, 50);
 
-        // 2. Play Audio & Bear Animation
-        if (isWon) {
-            this.uiElevatorBear.src = 'Images/Ascensours/ours/happy.png';
-            const audio = new Audio('Son/Musique/win.mp3');
-            audio.playbackRate = this.speedMultiplier;
-            audio.play().catch(e => console.warn('Transition music failed:', e));
+            // 2. Musique et Résultat
+            if (isWon) {
+                this.uiElevatorBear.src = 'Images/Ascensours/ours/happy.png';
+                const audio = new Audio('Son/Musique/transi_win.mp3');
+                audio.playbackRate = this.speedMultiplier;
+                audio.play().catch(e => console.warn('Transition music failed:', e));
 
-            audio.addEventListener('ended', () => {
-                this.uiLevelDisplay.classList.add('up');
-                setTimeout(guardedEnd, 500);
-            }, { once: true });
-        } else {
-            this.uiElevatorBear.src = 'Images/Ascensours/ours/miss.png';
-            const loosePitch = Math.max(0.7, this.speedMultiplier * 0.85);
-            const audioLoose = new Audio('Son/Musique/loose_transi.mp3');
-            audioLoose.playbackRate = loosePitch;
-            audioLoose.play().catch(e => console.warn('loose_transi failed:', e));
-
-            audioLoose.addEventListener('ended', () => {
-                this.startBearIdle();
-                const audioTransi = new Audio('Son/Musique/transi.mp3');
-                audioTransi.playbackRate = this.speedMultiplier;
-                audioTransi.play().catch(e => console.warn('transi failed:', e));
-
-                audioTransi.addEventListener('ended', () => {
-                    this.uiLevelDisplay.classList.add('up');
-                    setTimeout(guardedEnd, 500);
+                let nextTriggered = false;
+                audio.addEventListener('timeupdate', () => {
+                    // Mix transi.mp3 slightly before win finishes
+                    if (!nextTriggered && audio.currentTime >= audio.duration - 0.4) {
+                        nextTriggered = true;
+                        this.startBearIdle();
+                        this.playTransiLoop(guardedEnd, openFrames);
+                    }
+                });
+                audio.addEventListener('ended', () => {
+                    if (!nextTriggered) {
+                        nextTriggered = true;
+                        this.startBearIdle();
+                        this.playTransiLoop(guardedEnd, openFrames);
+                    }
                 }, { once: true });
-            }, { once: true });
-        }
+            } else {
+                this.uiElevatorBear.src = 'Images/Ascensours/ours/miss.png';
+                const loosePitch = Math.max(0.7, this.speedMultiplier * 0.85);
+                const audioLoose = new Audio('Son/Musique/loose_transi.mp3');
+                audioLoose.playbackRate = loosePitch;
+                audioLoose.play().catch(e => console.warn('loose_transi failed:', e));
+
+                audioLoose.addEventListener('ended', () => {
+                    this.startBearIdle();
+                    this.playTransiLoop(guardedEnd, openFrames);
+                }, { once: true });
+            }
+        });
+    }
+
+    playTransiLoop(guardedEnd, openFrames) {
+        const audioTransi = new Audio('Son/Musique/transi.mp3');
+        audioTransi.playbackRate = this.speedMultiplier;
+        audioTransi.play().catch(e => console.warn('transi failed:', e));
+
+        let openTriggered = false;
+
+        // Trigger opening BEFORE the very end of transi
+        audioTransi.addEventListener('timeupdate', () => {
+            if (!openTriggered && audioTransi.currentTime >= audioTransi.duration - 1.0 / this.speedMultiplier) {
+                openTriggered = true;
+                this.uiLevelDisplay.classList.add('up');
+
+                // Masquer le score et l'ours pour l'ouverture
+                this.uiElevatorBear.style.opacity = 0;
+                this.uiScore.style.opacity = 0;
+                this.uiLives.style.opacity = 0;
+                this.uiSpeedUp.classList.remove('visible');
+
+                // Ouverture Rapide
+                const elevatorBg = document.getElementById('elevator-bg');
+                let f = 0;
+                const timer = setInterval(() => {
+                    elevatorBg.style.backgroundImage = `url('${openFrames[f]}')`;
+                    f++;
+                    if (f >= openFrames.length) {
+                        clearInterval(timer);
+                        // Start Zoom Effect
+                        this.uiTransition.classList.add('elevator-zoom');
+                        setTimeout(guardedEnd, 400); // Wait for zoom to finish
+                    }
+                }, 80);
+            }
+        });
+
+        audioTransi.addEventListener('ended', () => {
+            if (!openTriggered) {
+                // Fallback
+                guardedEnd();
+            }
+        }, { once: true });
     }
 
     startBearIdle() {

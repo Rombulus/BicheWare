@@ -47,6 +47,7 @@ export class MiniGame {
         this.activeSounds.forEach(audio => {
             audio.pause();
             audio.src = "";
+            audio.load();
         });
         this.activeSounds = [];
     }

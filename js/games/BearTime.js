@@ -23,6 +23,7 @@ export class BearTime extends MiniGame {
         this.winTriggered = false;
         this.startMouseX = -1;
         this.startMouseY = -1;
+        this.handleKey = this.handleKey.bind(this);
     }
 
     start() {
@@ -35,11 +36,14 @@ export class BearTime extends MiniGame {
         this.currentImg = this.imgs[Math.floor(Math.random() * this.imgs.length)];
 
         window.addEventListener('mousedown', this.handleClick);
+        window.addEventListener('mousemove', this.handleMove);
+        window.addEventListener('keydown', this.handleKey);
         this.playSound('Son/SFX/Beartime/soundtrack.mp3', true);
     }
 
     handleMove(e) {
         if (!this.isActive || this.failed || this.winTriggered) return;
+        if (this.timeLeft > (5.0 / this.speedMultiplier) - 0.5) return; // Wait 0.5s
 
         if (this.startMouseX === -1) {
             this.startMouseX = e.clientX;
@@ -57,12 +61,19 @@ export class BearTime extends MiniGame {
 
     handleClick() {
         if (!this.isActive || this.failed || this.winTriggered) return;
+        if (this.timeLeft > (5.0 / this.speedMultiplier) - 0.5) return; // Wait 0.5s
+        this.fail();
+    }
+
+    handleKey() {
+        if (!this.isActive || this.failed || this.winTriggered) return;
+        if (this.timeLeft > (5.0 / this.speedMultiplier) - 0.5) return; // Wait 0.5s
         this.fail();
     }
 
     fail() {
         this.failed = true;
-        this.stopAllSounds(); // Stop soundtrack on fail
+        this.playSound('Son/SFX/BearFind/wrong.mp3'); // Play loss sound but keep music running
     }
 
     update(dt) {
@@ -112,8 +123,9 @@ export class BearTime extends MiniGame {
     }
 
     cleanup() {
-        window.removeEventListener('mousedown', this.handleInput);
-        window.removeEventListener('keydown', this.handleInput);
+        window.removeEventListener('mousedown', this.handleClick);
+        window.removeEventListener('mousemove', this.handleMove);
+        window.removeEventListener('keydown', this.handleKey);
     }
 
     getInstruction() {

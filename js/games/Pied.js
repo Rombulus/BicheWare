@@ -25,6 +25,8 @@ export class Pied extends MiniGame {
             r: 80
         };
         this.canvas.addEventListener('mousedown', this.handleClick);
+        const mus = this.playSound('Son/Musique/transi.mp3', true);
+        if (mus) mus.volume = 0.3;
     }
 
     handleClick(e) {

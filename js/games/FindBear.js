@@ -71,7 +71,6 @@ export class FindBear extends MiniGame {
             const obj = this.objects[i];
             if (mx > obj.x && mx < obj.x + obj.w && my > obj.y && my < obj.y + obj.h) {
                 if (obj.isTarget) {
-                    this.stopAllSounds();
                     this.playSound('Son/SFX/BearFind/check.mp3');
                     this.triggerFlash("rgba(0, 255, 0, 0.5)");
                     this.win();
