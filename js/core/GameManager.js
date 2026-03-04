@@ -169,7 +169,10 @@ export class GameManager {
     showTransition(onComplete, speedUp = false, isWon = true) {
         this.isTransitioning = true;
         this.uiTransition.style.display = 'block';
-        this.uiTransition.classList.remove('elevator-zoom'); // Reset zoom
+
+        // At the start of transition (door closing), we zoom OUT
+        this.uiTransition.classList.remove('elevator-zoom-in');
+        this.uiTransition.classList.add('elevator-zoom-out');
         this.uiScore.innerText = this.score;
         this.updateLivesUI();
 
@@ -187,15 +190,15 @@ export class GameManager {
         // Sequences d'images
         const closeFrames = [
             'Images/Ascensours/cage/vide.jpg',
-            'Images/Ascensours/cage/ouvert 2.jpg',
-            'Images/Ascensours/cage/ouvert 1.jpg',
-            'Images/Ascensours/cage/full.jpg'
+            'Images/Ascensours/cage/ouvert 2.png',
+            'Images/Ascensours/cage/ouvert 1.png',
+            'Images/Ascensours/cage/full.png'
         ];
 
         const openFrames = [
-            'Images/Ascensours/cage/full.jpg',
-            'Images/Ascensours/cage/ouvert 1.jpg',
-            'Images/Ascensours/cage/ouvert 2.jpg',
+            'Images/Ascensours/cage/full.png',
+            'Images/Ascensours/cage/ouvert 1.png',
+            'Images/Ascensours/cage/ouvert 2.png',
             'Images/Ascensours/cage/vide.jpg'
         ];
 
@@ -305,7 +308,8 @@ export class GameManager {
                     if (f >= openFrames.length) {
                         clearInterval(timer);
                         // Start Zoom Effect
-                        this.uiTransition.classList.add('elevator-zoom');
+                        this.uiTransition.classList.remove('elevator-zoom-out');
+                        this.uiTransition.classList.add('elevator-zoom-in');
                         setTimeout(guardedEnd, 400); // Wait for zoom to finish
                     }
                 }, 80);
