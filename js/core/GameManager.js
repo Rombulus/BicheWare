@@ -41,9 +41,30 @@ export class GameManager {
         this.bearFrame = 1;
         this.bearInterval = null;
 
+        this.preloadImages();
+
         this.initLivesUI();
         this.loop = this.loop.bind(this);
         requestAnimationFrame(this.loop);
+    }
+
+    preloadImages() {
+        const imagesToPreload = [
+            'Images/Ascensours/cage/vide.jpg',
+            'Images/Ascensours/cage/ouvert 2.png',
+            'Images/Ascensours/cage/ouvert 1.png',
+            'Images/Ascensours/cage/full.png',
+            'Images/Ascensours/ours/frame 1.png',
+            'Images/Ascensours/ours/frame 2.png',
+            'Images/Ascensours/ours/frame 3.png',
+            'Images/Ascensours/ours/happy.png',
+            'Images/Ascensours/ours/miss.png'
+        ];
+
+        imagesToPreload.forEach(src => {
+            const img = new Image();
+            img.src = src;
+        });
     }
 
     initLivesUI() {
@@ -71,7 +92,7 @@ export class GameManager {
     /**
      * Start a specific game or the random loop if no name provided.
      */
-    startGame(name) {
+    startGame(name, prepareOnly = false) {
         if (!name) {
             this.startRandomLoop();
             return;
@@ -91,6 +112,19 @@ export class GameManager {
         this.currentGame.speedMultiplier = this.speedMultiplier; // <-- apply speed
         this.currentGame.onGameEnd = (isWon) => this.handleGameEnd(isWon);
         this.currentGame.onShowInstruction = (text) => this.showInstruction(text);
+
+        // Force a render of the first frame for the transition screen
+        this.currentGame.isActive = true;
+        this.currentGame.draw();
+        this.currentGame.isActive = false;
+
+        if (!prepareOnly) {
+            this.startCurrentGame();
+        }
+    }
+
+    startCurrentGame() {
+        if (!this.currentGame) return;
 
         // Fetch the first instruction the game might want to show
         let instr = "JOUTE !";
@@ -118,20 +152,20 @@ export class GameManager {
         this.nextRandomGame();
     }
 
-    nextRandomGame() {
+    nextRandomGame(prepareOnly = false) {
         const available = Object.keys(this.games).filter(name => !this.playedGames.has(name));
 
         if (available.length === 0) {
             console.log("All games played! Resetting list to keep going...");
             this.playedGames.clear();
-            this.nextRandomGame();
+            this.nextRandomGame(prepareOnly);
             return;
         }
 
         const randomIndex = Math.floor(Math.random() * available.length);
         const name = available[randomIndex];
         this.playedGames.add(name);
-        this.startGame(name);
+        this.startGame(name, prepareOnly);
     }
 
     handleGameEnd(isWon) {
@@ -161,18 +195,26 @@ export class GameManager {
             if (this.lives <= 0) {
                 this.gameOver();
             } else if (this.isLooping) {
-                this.showTransition(() => this.nextRandomGame(), didSpeedUp, isWon);
+                this.showTransition(
+                    () => this.nextRandomGame(true),
+                    () => this.startCurrentGame(),
+                    didSpeedUp,
+                    isWon
+                );
             }
         }, 100);
     }
 
-    showTransition(onComplete, speedUp = false, isWon = true) {
+    showTransition(onPrepare, onStart, speedUp = false, isWon = true) {
         this.isTransitioning = true;
         this.uiTransition.style.display = 'block';
 
-        // At the start of transition (door closing), we zoom OUT
-        this.uiTransition.classList.remove('elevator-zoom-in');
-        this.uiTransition.classList.add('elevator-zoom-out');
+        this.uiTransition.classList.remove('elevator-zoom-in', 'elevator-zoom-out');
+        void this.uiTransition.offsetWidth; // Force reflow
+
+        const elevatorBg = document.getElementById('elevator-bg');
+        elevatorBg.style.backgroundImage = `url('Images/Ascensours/cage/full.png')`;
+
         this.uiScore.innerText = this.score;
         this.updateLivesUI();
 
@@ -185,21 +227,21 @@ export class GameManager {
         this.uiSpeedUp.classList.remove('visible');
         if (speedUp) this.uiSpeedUp.classList.add('visible');
 
-        const elevatorBg = document.getElementById('elevator-bg');
-
         // Sequences d'images
+        // When game ends (exiting game), doors CLOSE to hide the game behind them
         const closeFrames = [
-            'Images/Ascensours/cage/vide.jpg',
-            'Images/Ascensours/cage/ouvert 2.png',
+            'Images/Ascensours/cage/full.png', // open
             'Images/Ascensours/cage/ouvert 1.png',
-            'Images/Ascensours/cage/full.png'
+            'Images/Ascensours/cage/ouvert 2.png',
+            'Images/Ascensours/cage/vide.jpg' // closed
         ];
 
+        // When starting next game (entering game), doors OPEN to reveal the game
         const openFrames = [
-            'Images/Ascensours/cage/full.png',
-            'Images/Ascensours/cage/ouvert 1.png',
+            'Images/Ascensours/cage/vide.jpg', // closed
             'Images/Ascensours/cage/ouvert 2.png',
-            'Images/Ascensours/cage/vide.jpg'
+            'Images/Ascensours/cage/ouvert 1.png',
+            'Images/Ascensours/cage/full.png' // open
         ];
 
         // Ensure UI elements are hidden until closed
@@ -209,13 +251,16 @@ export class GameManager {
 
         const animateFrames = (frames, interval, callback) => {
             let f = 0;
+            elevatorBg.style.backgroundImage = `url('${frames[f]}')`;
+            f++;
             const timer = setInterval(() => {
-                elevatorBg.style.backgroundImage = `url('${frames[f]}')`;
-                f++;
                 if (f >= frames.length) {
                     clearInterval(timer);
                     if (callback) callback();
+                    return;
                 }
+                elevatorBg.style.backgroundImage = `url('${frames[f]}')`;
+                f++;
             }, interval);
         };
 
@@ -228,56 +273,64 @@ export class GameManager {
             this.isTransitioning = false;
 
             // Start the next game!
-            if (onComplete) onComplete();
+            if (onStart) onStart();
         };
 
         const guardedEnd = () => { doEnd(); };
 
         // --- Sequence Start ---
-        // 1. Fermeture Rapide
-        animateFrames(closeFrames, 80, () => {
-            // Ascenseur fermé.
-            this.uiElevatorBear.style.opacity = 1;
-            this.uiScore.style.opacity = 1;
-            this.uiLives.style.opacity = 1;
-            setTimeout(() => { this.uiLevelDisplay.classList.add('center'); }, 50);
+        setTimeout(() => {
+            // 1. Fermeture Rapide
+            animateFrames(closeFrames, 80, () => {
+                // Ascenseur fermé. Prepare next game!
+                if (onPrepare) {
+                    this.ctx.fillStyle = '#000';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    onPrepare();
+                }
 
-            // 2. Musique et Résultat
-            if (isWon) {
-                this.uiElevatorBear.src = 'Images/Ascensours/ours/happy.png';
-                const audio = new Audio('Son/Musique/transi_win.mp3');
-                audio.playbackRate = this.speedMultiplier;
-                audio.play().catch(e => console.warn('Transition music failed:', e));
+                this.uiElevatorBear.style.opacity = 1;
+                this.uiScore.style.opacity = 1;
+                this.uiLives.style.opacity = 1;
+                setTimeout(() => { this.uiLevelDisplay.classList.add('center'); }, 50);
 
-                let nextTriggered = false;
-                audio.addEventListener('timeupdate', () => {
-                    // Mix transi.mp3 slightly before win finishes
-                    if (!nextTriggered && audio.currentTime >= audio.duration - 0.4) {
-                        nextTriggered = true;
+                // 2. Musique et Résultat
+                if (isWon) {
+                    this.uiElevatorBear.src = 'Images/Ascensours/ours/happy.png';
+                    const audio = new Audio('Son/Musique/transi_win.mp3');
+                    audio.playbackRate = this.speedMultiplier;
+                    audio.play().catch(e => console.warn('Transition music failed:', e));
+
+                    let nextTriggered = false;
+                    audio.addEventListener('timeupdate', () => {
+                        // Mix transi.mp3 slightly before win finishes
+                        if (!nextTriggered && audio.currentTime >= audio.duration - 0.4) {
+                            nextTriggered = true;
+                            this.startBearIdle();
+                            this.playTransiLoop(guardedEnd, openFrames);
+                        }
+                    });
+                    audio.addEventListener('ended', () => {
+                        if (!nextTriggered) {
+                            nextTriggered = true;
+                            this.startBearIdle();
+                            this.playTransiLoop(guardedEnd, openFrames);
+                        }
+                    }, { once: true });
+                } else {
+                    this.uiElevatorBear.src = 'Images/Ascensours/ours/miss.png';
+                    const loosePitch = Math.max(0.7, this.speedMultiplier * 0.85);
+                    const audioLoose = new Audio('Son/Musique/loose_transi.mp3');
+                    audioLoose.playbackRate = loosePitch;
+                    audioLoose.play().catch(e => console.warn('loose_transi failed:', e));
+
+                    audioLoose.addEventListener('ended', () => {
                         this.startBearIdle();
                         this.playTransiLoop(guardedEnd, openFrames);
-                    }
-                });
-                audio.addEventListener('ended', () => {
-                    if (!nextTriggered) {
-                        nextTriggered = true;
-                        this.startBearIdle();
-                        this.playTransiLoop(guardedEnd, openFrames);
-                    }
-                }, { once: true });
-            } else {
-                this.uiElevatorBear.src = 'Images/Ascensours/ours/miss.png';
-                const loosePitch = Math.max(0.7, this.speedMultiplier * 0.85);
-                const audioLoose = new Audio('Son/Musique/loose_transi.mp3');
-                audioLoose.playbackRate = loosePitch;
-                audioLoose.play().catch(e => console.warn('loose_transi failed:', e));
-
-                audioLoose.addEventListener('ended', () => {
-                    this.startBearIdle();
-                    this.playTransiLoop(guardedEnd, openFrames);
-                }, { once: true });
-            }
-        });
+                    }, { once: true });
+                }
+            });
+        }, 150);
     }
 
     playTransiLoop(guardedEnd, openFrames) {
@@ -302,16 +355,19 @@ export class GameManager {
                 // Ouverture Rapide
                 const elevatorBg = document.getElementById('elevator-bg');
                 let f = 0;
+                elevatorBg.style.backgroundImage = `url('${openFrames[f]}')`;
+                f++;
                 const timer = setInterval(() => {
-                    elevatorBg.style.backgroundImage = `url('${openFrames[f]}')`;
-                    f++;
                     if (f >= openFrames.length) {
                         clearInterval(timer);
                         // Start Zoom Effect
                         this.uiTransition.classList.remove('elevator-zoom-out');
                         this.uiTransition.classList.add('elevator-zoom-in');
                         setTimeout(guardedEnd, 400); // Wait for zoom to finish
+                        return;
                     }
+                    elevatorBg.style.backgroundImage = `url('${openFrames[f]}')`;
+                    f++;
                 }, 80);
             }
         });
