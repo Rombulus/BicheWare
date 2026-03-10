@@ -9,7 +9,6 @@ export class GameManager {
         // UI Elements
         this.uiTimer = document.getElementById('timer');
         this.uiInstruction = document.getElementById('instruction');
-        this.uiInstructionHeader = document.getElementById('instruction-header');
 
         // Transition UI
         this.uiTransition = document.getElementById('transition-screen');
@@ -19,6 +18,13 @@ export class GameManager {
         this.uiBiche = document.getElementById('biche-runner');
         this.uiLevelDisplay = document.getElementById('level-display');
         this.uiHomeScreen = document.getElementById('home-screen');
+        this.uiLeaderboard = document.getElementById('leaderboard');
+        this.uiScreenFrame = document.getElementById('screen-frame');
+        
+        // New HUD elements
+        this.uiCurrentScore = document.getElementById('current-score');
+        this.uiHudLives = document.getElementById('hud-lives');
+        this.uiFixedInstruction = document.getElementById('fixed-instruction-box');
 
         // Game Loop State
         this.playedGames = new Set();
@@ -43,7 +49,7 @@ export class GameManager {
 
     preloadVoices() {
         this.voiceAudio = new Audio();
-        this.voiceAudio.volume = 0.7;
+        this.voiceAudio.volume = 1.0; // Max volume for voices
         // Preload standard win voice
         this.winVoiceSrc = 'Son/Voix/clear/Biche.mp3';
         this.lossVoicePool = [
@@ -68,21 +74,33 @@ export class GameManager {
     }
 
     initLivesUI() {
-        this.uiLives.innerHTML = '';
+        if (!this.uiHudLives) return;
+        this.uiHudLives.innerHTML = '';
         for (let i = 0; i < 4; i++) {
             const life = document.createElement('div');
-            life.classList.add('life-icon');
-            this.uiLives.appendChild(life);
+            life.classList.add('hud-life');
+            this.uiHudLives.appendChild(life);
         }
     }
 
     updateLivesUI() {
-        const icons = this.uiLives.querySelectorAll('.life-icon');
+        if (!this.uiHudLives) return;
+        const icons = this.uiHudLives.querySelectorAll('.hud-life');
         icons.forEach((icon, index) => {
             if (index >= this.lives) {
                 icon.classList.add('lost');
+            } else {
+                icon.classList.remove('lost');
             }
         });
+        
+        // Legacy support if needed
+        if (this.uiLives) {
+            const legacyIcons = this.uiLives.querySelectorAll('.life-icon');
+            legacyIcons.forEach((icon, index) => {
+                if (index >= this.lives) icon.classList.add('lost');
+            });
+        }
     }
 
     registerGame(name, gameClass) {
@@ -98,6 +116,7 @@ export class GameManager {
             return;
         }
 
+        this.resetFixedInstruction();
         this.currentVoiceOutcome = null; // Reset for new game
 
         if (this.currentGame) {
@@ -180,7 +199,15 @@ export class GameManager {
             this.score++;
         } else {
             this.lives--;
+            // Shake the screen on loss
+            if (this.uiScreenFrame) {
+                this.uiScreenFrame.classList.add('shake');
+                setTimeout(() => this.uiScreenFrame.classList.remove('shake'), 400);
+            }
         }
+
+        if (this.uiCurrentScore) this.uiCurrentScore.innerText = this.score;
+        this.updateLivesUI();
 
         // Speed progression: every 7 games
         this.gamesPlayedTotal++;
@@ -215,6 +242,7 @@ export class GameManager {
     showTransition(onPrepare, onStart, speedUp = false, isWon = true) {
         this.isTransitioning = true;
         this.uiTransition.style.display = 'block';
+        this.uiTransition.classList.add('speeding');
 
         this.uiScore.innerText = this.score;
         this.updateLivesUI();
@@ -242,11 +270,13 @@ export class GameManager {
         let resultAudio;
         if (isWon) {
             resultAudio = new Audio('Son/Musique/transi_win.mp3');
+            resultAudio.volume = 0.5; // Lower music volume
             resultAudio.playbackRate = this.speedMultiplier;
             resultAudio.preservesPitch = false;
         } else {
             const loosePitch = Math.max(0.7, this.speedMultiplier * 0.85);
             resultAudio = new Audio('Son/Musique/loose_transi.mp3');
+            resultAudio.volume = 0.5; // Lower music volume
             resultAudio.playbackRate = loosePitch;
             resultAudio.preservesPitch = false;
         }
@@ -254,6 +284,7 @@ export class GameManager {
 
         // Start the main transi.mp3 audio exactly when the jingle is ending
         const transiAudio = new Audio('Son/Musique/transi.mp3');
+        transiAudio.volume = 0.5; // Lower music volume
         transiAudio.playbackRate = this.speedMultiplier;
         transiAudio.preservesPitch = false;
 
@@ -285,6 +316,7 @@ export class GameManager {
         transiAudio.addEventListener('ended', () => {
             if (!this.isTransitioning) return;
             this.uiTransition.style.display = 'none';
+            this.uiTransition.classList.remove('speeding');
             this.uiBiche.classList.remove('biche-running');
             this.uiSpeedUp.classList.remove('visible');
             this.uiLevelDisplay.classList.remove('center');
@@ -313,10 +345,39 @@ export class GameManager {
         this.uiScore.innerText = this.score;
         this.updateLivesUI();
 
-        // Show restart button or just allow manual reload
+        // Show leaderboard
+        const fakeData = [
+            { name: "Ours", score: 50 },
+            { name: "Cerf", score: 30 },
+            { name: "Renard", score: 20 },
+            { name: "Lapin", score: 15 },
+            { name: "Mulot", score: 5 }
+        ];
+
+        // Insert Mattéa
+        const playerName = "Mattéa";
+        const leaderboard = [...fakeData, { name: playerName, score: this.score, isPlayer: true }];
+        leaderboard.sort((a, b) => b.score - a.score);
+
+        // Render leaderboard
+        this.uiLeaderboard.innerHTML = '<h2>TOP BICHES</h2>';
+        this.uiLeaderboard.classList.remove('hidden');
+
+        leaderboard.slice(0, 6).forEach((entry, index) => {
+            const row = document.createElement('div');
+            row.className = 'leaderboard-entry' + (entry.isPlayer ? ' player-row' : '');
+            row.innerHTML = `
+                <span class="rank">${index + 1}</span>
+                <span class="name">${entry.name}</span>
+                <span class="score">${entry.score}</span>
+            `;
+            this.uiLeaderboard.appendChild(row);
+        });
+
+        // Increase delay before reload to let player see results
         setTimeout(() => {
             window.location.reload();
-        }, 5000);
+        }, 10000);
     }
 
     playGlobalVoice(isWon) {
@@ -340,7 +401,7 @@ export class GameManager {
             if (this.voiceAudio) {
                 this.voiceAudio.pause();
                 this.voiceAudio.src = src;
-                this.voiceAudio.volume = 0.7;
+                this.voiceAudio.volume = 1.0;
                 this.voiceAudio.playbackRate = 1.0; // Keep voice pitch normal
                 this.voiceAudio.play().then(() => {
                     console.log(`GameManager: Voice playing successfully: ${src}`);
@@ -368,8 +429,7 @@ export class GameManager {
         this.uiInstruction.classList.add('visible');
 
         // Clear header initially to avoid double display
-        this.uiInstructionHeader.style.opacity = "0";
-        this.uiInstructionHeader.innerText = "";
+        // (Removed old header logic)
 
         if (this.instructionTimeout) clearTimeout(this.instructionTimeout);
 
@@ -378,19 +438,24 @@ export class GameManager {
             this.uiInstruction.classList.add('slide-up');
             this.uiInstruction.classList.remove('visible');
 
-            // Sync with header after transition
-            setTimeout(() => {
-                this.uiInstructionHeader.innerText = text;
-                this.uiInstructionHeader.style.opacity = "1";
-            }, 300);
+            // Sync with fixed box
+            if (this.uiFixedInstruction) {
+                this.uiFixedInstruction.innerText = text;
+                this.uiFixedInstruction.classList.add('active');
+            }
         }, 600);
+    }
+
+    resetFixedInstruction() {
+        if (this.uiFixedInstruction) {
+            this.uiFixedInstruction.innerText = "PRÊT ?";
+            this.uiFixedInstruction.classList.remove('active');
+        }
     }
 
     hideInstruction() {
         this.uiInstruction.classList.remove('visible');
         this.uiInstruction.classList.remove('slide-up');
-        this.uiInstructionHeader.innerText = "";
-        this.uiInstructionHeader.style.opacity = "0";
         if (this.instructionTimeout) clearTimeout(this.instructionTimeout);
     }
 

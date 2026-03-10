@@ -102,31 +102,34 @@
 
 #speed-up-label {
     position: absolute;
-    top: 100px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    font-size: 52px;
-    font-weight: 900;
-    color: #fff;
-    text-shadow: 3px 3px 0 #c00, -3px -3px 0 #c00;
-    z-index: 6;
+    transform: translate(-50%, -50%);
+    font-family: 'Luckiest Guy', cursive;
+    font-size: 100px;
+    color: #e74c3c;
+    text-shadow: 
+        5px 5px 0 #000,
+        -5px -5px 0 #fff;
+    z-index: 2200;
     display: none;
-    animation: speedup-flash 0.4s ease-in-out infinite alternate;
+    pointer-events: none;
+    white-space: nowrap;
 }
 
 #speed-up-label.visible {
     display: block;
+    animation: speedup-intro 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate;
 }
 
-@keyframes speedup-flash {
+@keyframes speedup-intro {
     from {
-        transform: translateX(-50%) scale(1);
-        opacity: 1;
+        transform: translate(-50%, -50%) scale(0.8) rotate(-5deg);
+        filter: hue-rotate(0deg);
     }
-
     to {
-        transform: translateX(-50%) scale(1.1);
-        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(1.2) rotate(5deg);
+        filter: hue-rotate(45deg);
     }
 }
 
@@ -193,8 +196,111 @@
 }
 
 #transition-screen.game-over #score-display::after {
-    content: 'GAME OVER';
+    content: 'DOMMAGE...';
     display: block;
-    font-size: 80px;
-    margin-top: 50px;
+    font-size: 60px;
+    margin-top: 20px;
+    color: #fff;
+    text-shadow: 4px 4px 0px #000;
 }
+
+#leaderboard {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -40%);
+    width: 80%;
+    background: rgba(0, 0, 0, 0.8);
+    border: 4px solid #fff;
+    padding: 20px;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    z-index: 10;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+#leaderboard.hidden {
+    display: none;
+}
+
+#leaderboard h2 {
+    text-align: center;
+    font-size: 40px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    color: #f1c40f;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.leaderboard-entry {
+    display: flex;
+    justify-content: space-between;
+    font-size: 28px;
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.leaderboard-entry:last-child {
+    border-bottom: none;
+}
+
+.leaderboard-entry.player-row {
+    background: rgba(255, 255, 255, 0.2);
+    color: #00ff00;
+    font-weight: 900;
+    animation: flashRow 0.5s infinite alternate;
+}
+
+@keyframes flashRow {
+    from { background: rgba(255, 255, 255, 0.2); }
+    to { background: rgba(255, 255, 255, 0.4); }
+}
+
+.rank { width: 50px; }
+.name { flex-grow: 1; text-align: left; margin-left: 20px; }
+.score { font-family: monospace; }
+
+/* Screenshake */
+@keyframes screenshake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+.shake {
+    animation: screenshake 0.3s;
+}
+
+/* Speed Lines Background for Transition */
+#transition-bg::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: radial-gradient(circle, transparent 20%, rgba(255,255,255,0.2) 21%, transparent 22%);
+    background-size: 15px 15px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+#transition-screen.speeding #transition-bg::after {
+    opacity: 1;
+    animation: speed-pulse 0.2s infinite;
+}
+
+@keyframes speed-pulse {
+    0% { transform: scale(1); opacity: 0.3; }
+    100% { transform: scale(1.1); opacity: 0.5; }
+}
+

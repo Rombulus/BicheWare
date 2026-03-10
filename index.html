@@ -4,20 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BicheWare</title>
+    <title>Le jeu de la biche</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/timer.css">
     <link rel="stylesheet" href="css/transition.css">
     <link rel="stylesheet" href="css/home.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <div id="home-screen">
-        <h1 id="home-title">BicheWare</h1>
+        <h1 id="home-title">Le jeu de la biche</h1>
         <button id="start-button">DÉMARRER</button>
     </div>
-    <div id="instruction-area">
-        <div id="instruction-header"></div>
     </div>
     <div id="transition-screen">
         <div id="transition-bg"></div>
@@ -26,28 +27,38 @@
         <div id="score-display">0</div>
         <div id="speed-up-label">SPEED UP!</div>
         <div id="lives-container"></div>
+        <div id="leaderboard" class="hidden"></div>
     </div>
     <div id="game-container">
-        <canvas id="game-canvas" width="800" height="600"></canvas>
-        <div id="ui-layer">
-            <!-- Game UI elements (score, timer, etc.) will go here -->
-            <div id="timer"></div>
-            <div id="instruction"></div>
-            <div id="bomb-timer-container">
-                <div id="bomb-visuals">
-                    <div id="fuse-container">
-                        <div id="fuse-segments">
-                            <div class="fuse-segment" id="seg-4"></div>
-                            <div class="fuse-segment" id="seg-3"></div>
-                            <div class="fuse-segment" id="seg-2"></div>
-                            <div class="fuse-segment" id="seg-1"></div>
+        <div id="fixed-instruction-box"> PRÊT ? </div>
+        <div id="screen-frame">
+            <div id="screen-inner">
+                <canvas id="game-canvas" width="800" height="600"></canvas>
+                <div id="ui-layer">
+                    <!-- Game UI elements (score, timer, etc.) will go here -->
+                    <div id="timer"></div>
+                    <div id="instruction"></div>
+                    <div id="bomb-timer-container">
+                        <div id="bomb-visuals">
+                            <div id="fuse-container">
+                                <div id="fuse-segments">
+                                    <div class="fuse-segment" id="seg-4"></div>
+                                    <div class="fuse-segment" id="seg-3"></div>
+                                    <div class="fuse-segment" id="seg-2"></div>
+                                    <div class="fuse-segment" id="seg-1"></div>
+                                </div>
+                                <div id="fuse-tip"></div>
+                            </div>
+                            <div id="bomb-sprite">
+                                <div id="explosion-sprite"></div>
+                            </div>
                         </div>
-                        <div id="fuse-tip"></div>
-                    </div>
-                    <div id="bomb-sprite">
-                        <div id="explosion-sprite"></div>
                     </div>
                 </div>
+            </div>
+            <div id="game-hud">
+                <div id="hud-score">SCORE: <span id="current-score">0</span></div>
+                <div id="hud-lives"></div>
             </div>
         </div>
     </div>
