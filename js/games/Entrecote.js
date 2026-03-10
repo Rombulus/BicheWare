@@ -72,10 +72,12 @@ export class Entrecote extends MiniGame {
 
         if (mx > this.itemX && mx < this.itemX + 300 && my > this.itemY && my < this.itemY + 300) {
             if (this.currentItem.type === 'waiter') {
+                this.triggerResultVoice(true);
                 this.win();
                 this.state = 'finished';
                 this.endGame();
             } else {
+                this.triggerResultVoice(false);
                 this.state = 'finished';
                 this.endGame();
             }

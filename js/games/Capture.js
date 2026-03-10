@@ -54,6 +54,7 @@ export class Capture extends MiniGame {
             this.captured = true;
             // Removed stopAllSounds() to keep UFO hum
             this.playSound('Son/SFX/UFO/ray.mp3');
+            this.triggerResultVoice(true);
             this.win();
         }
     }

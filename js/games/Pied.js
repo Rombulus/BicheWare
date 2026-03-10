@@ -25,13 +25,10 @@ export class Pied extends MiniGame {
             r: 80
         };
         this.canvas.addEventListener('mousedown', this.handleClick);
-        const mus = this.playSound('Son/Musique/transi.mp3', true);
-        if (mus) mus.volume = 0.3;
     }
 
     handleClick(e) {
         if (!this.isActive || this.isWon) return;
-
 
         const rect = this.canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
@@ -46,6 +43,7 @@ export class Pied extends MiniGame {
                 this.playSound('Son/SFX/Pied/pop.mp3');
             } else if (this.clicks === this.requiredClicks) {
                 this.playSound('Son/SFX/Pied/oh.mp3');
+                this.triggerResultVoice(true);
                 this.win();
             }
         }

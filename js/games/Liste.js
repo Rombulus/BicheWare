@@ -86,10 +86,6 @@ export class Liste extends MiniGame {
         window.addEventListener('mousemove', this.handleMove);
         window.addEventListener('mouseup', this.handleUp);
 
-        // Play ambient sound
-        const mus = this.playSound('Son/Musique/transi.mp3', true);
-        if (mus) mus.volume = 0.4;
-
         this.scribeSound = null;
     }
 
@@ -100,9 +96,6 @@ export class Liste extends MiniGame {
         this.isDrawing = true;
         this.currentStroke = [];
         this.addPoint(e);
-        if (!this.scribeSound) {
-            this.scribeSound = this.playSound('Son/SFX/Liste/scribe.mp3', true);
-        }
     }
 
     handleMove(e) {
@@ -113,10 +106,6 @@ export class Liste extends MiniGame {
     handleUp(e) {
         if (!this.isActive) return;
         this.isDrawing = false;
-        if (this.scribeSound) {
-            this.scribeSound.pause();
-            this.scribeSound = null;
-        }
 
         // Commit the stroke
         if (this.currentStroke.length > 1) {
@@ -129,6 +118,7 @@ export class Liste extends MiniGame {
 
         // Immediately win if all items crossed
         if (this.items.every(item => item.crossed)) {
+            this.triggerResultVoice(true);
             this.win();
             this.endGame();
         }

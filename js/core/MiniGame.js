@@ -102,6 +102,14 @@ export class MiniGame {
         }
     }
 
+    triggerResultVoice(isWon) {
+        if (this.onResultVoice) {
+            this.onResultVoice(isWon);
+        } else if (window.gameManager) {
+            window.gameManager.playGlobalVoice(isWon);
+        }
+    }
+
     getInstruction() {
         return "JOUTE !"; // Default instruction
     }

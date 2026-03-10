@@ -73,6 +73,7 @@ export class Routine extends MiniGame {
             this.targetZone.done = true;
             this.successCount++;
             if (this.successCount >= 3) {
+                this.triggerResultVoice(true);
                 this.win();
             } else {
                 this.pickZone();

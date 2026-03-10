@@ -78,6 +78,7 @@ export class CourseBiche extends MiniGame {
     triggerWin() {
         if (this.isFinished) return;
         this.isFinished = true;
+        this.triggerResultVoice(true);
         this.win();
 
         this.playSound('Son/SFX/RunBiche/win.mp3');
@@ -86,7 +87,7 @@ export class CourseBiche extends MiniGame {
 
     advance() {
         if (this.isFinished) return;
-        this.playerX += 52;
+        this.playerX += 52 * this.speedMultiplier;
     }
 
     update(dt) {

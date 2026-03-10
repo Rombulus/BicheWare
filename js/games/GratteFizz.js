@@ -63,7 +63,7 @@ export class GratteFizz extends MiniGame {
             const dist = dx + dy;
 
             if (dist > 2) { // Minimal movement to count as scratching
-                this.rubScore += dist * 0.5;
+                this.rubScore += dist * 0.5 * this.speedMultiplier;
                 this.lastMouse = { x: e.clientX, y: e.clientY };
 
                 if (!this.pantPlayed && this.rubScore > this.requiredRub * 0.8) {
@@ -80,6 +80,7 @@ export class GratteFizz extends MiniGame {
 
     triggerWin() {
         if (this.isWon) return;
+        this.triggerResultVoice(true);
         this.win();
 
         if (this.scratchSound) {

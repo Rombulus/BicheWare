@@ -73,11 +73,13 @@ export class FindBear extends MiniGame {
                 if (obj.isTarget) {
                     this.playSound('Son/SFX/BearFind/check.mp3');
                     this.triggerFlash("rgba(0, 255, 0, 0.5)");
+                    this.triggerResultVoice(true);
                     this.win();
                 } else {
                     this.stopAllSounds();
                     this.playSound('Son/SFX/BearFind/wrong.mp3');
                     this.triggerFlash("rgba(255, 0, 0, 0.5)");
+                    this.triggerResultVoice(false);
                     // Delay end to allow sound to play and maintain momentum
                     setTimeout(() => {
                         this.endGame();

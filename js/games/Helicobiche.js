@@ -95,8 +95,8 @@ export class Helicobiche extends MiniGame {
             this.helicoSound = null;
         }
 
-        this.playerX += this.speedX * dt;
-        this.playerY += this.speedY * dt;
+        this.playerX += this.speedX * dt * this.speedMultiplier;
+        this.playerY += this.speedY * dt * this.speedMultiplier;
 
         this.playerX = Math.max(0, Math.min(this.playerX, this.canvas.width - 50));
         this.playerY = Math.max(0, Math.min(this.playerY, this.canvas.height - 50));
@@ -111,6 +111,7 @@ export class Helicobiche extends MiniGame {
             }
             this.playSound('Son/SFX/BearFind/check.mp3');
             // Remove timer snapping to avoid double win triggers or state issues
+            this.triggerResultVoice(true);
             this.win();
         }
     }

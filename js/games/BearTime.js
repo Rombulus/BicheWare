@@ -73,7 +73,8 @@ export class BearTime extends MiniGame {
 
     fail() {
         this.failed = true;
-        this.playSound('Son/SFX/BearFind/wrong.mp3'); // Play loss sound but keep music running
+        this.triggerResultVoice(false);
+        this.playSound('Son/SFX/BearFind/wrong.mp3');
     }
 
     update(dt) {
@@ -82,6 +83,7 @@ export class BearTime extends MiniGame {
 
         if (this.timeLeft <= 1.0 && !this.failed && !this.winTriggered) {
             this.winTriggered = true;
+            this.triggerResultVoice(true);
             this.stopAllSounds(); // Stop soundtrack on win
             this.playSound('Son/SFX/Beartime/check.wav');
             this.win();

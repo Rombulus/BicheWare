@@ -60,5 +60,12 @@ startBtn.addEventListener('click', () => {
     }
 });
 
+const homeStartBtn = document.getElementById('start-button');
+if (homeStartBtn) {
+    homeStartBtn.addEventListener('click', () => {
+        gameManager.startRandomLoop();
+    });
+}
+
 // Expose manager for debugging
 window.gameManager = gameManager;

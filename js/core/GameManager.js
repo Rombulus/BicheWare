@@ -11,54 +11,54 @@ export class GameManager {
         this.uiInstruction = document.getElementById('instruction');
         this.uiInstructionHeader = document.getElementById('instruction-header');
 
+        // Transition UI
+        this.uiTransition = document.getElementById('transition-screen');
+        this.uiScore = document.getElementById('score-display');
+        this.uiLives = document.getElementById('lives-container');
+        this.uiSpeedUp = document.getElementById('speed-up-label');
+        this.uiBiche = document.getElementById('biche-runner');
+        this.uiLevelDisplay = document.getElementById('level-display');
+        this.uiHomeScreen = document.getElementById('home-screen');
+
         // Game Loop State
         this.playedGames = new Set();
         this.isLooping = false;
         this.score = 0;
         this.lives = 4;
         this.isTransitioning = false;
+        this.currentVoiceOutcome = null;
 
         // Speed system
         this.speedMultiplier = 1.0;
         this.gamesPlayedTotal = 0;
-        this.speedTier = 0; // increments every 7 games
-        // Transition UI
-        this.uiTransition = document.getElementById('transition-screen');
-        this.uiScore = document.getElementById('score-display');
-        this.uiLives = document.getElementById('lives-container');
-        this.uiSpeedUp = document.getElementById('speed-up-label');
-
-        // Elevator specific
-        this.uiElevatorContainer = document.getElementById('elevator-container');
-        this.uiElevatorBear = document.getElementById('elevator-bear');
-        this.uiLevelDisplay = document.getElementById('level-display');
-
-        // Speed system
-        this.speedMultiplier = 1.0;
-        this.gamesPlayedTotal = 0;
-        this.speedTier = 0; // increments every 7 games
-
-        this.bearFrame = 1;
-        this.bearInterval = null;
+        this.speedTier = 0;
 
         this.preloadImages();
-
+        this.preloadVoices();
         this.initLivesUI();
+
         this.loop = this.loop.bind(this);
         requestAnimationFrame(this.loop);
     }
 
+    preloadVoices() {
+        this.voiceAudio = new Audio();
+        this.voiceAudio.volume = 0.7;
+        // Preload standard win voice
+        this.winVoiceSrc = 'Son/Voix/clear/Biche.mp3';
+        this.lossVoicePool = [
+            'Son/Voix/lost/nice try.mp3',
+            'Son/Voix/lost/oh no.mp3',
+            'Son/Voix/lost/too bad.mp3'
+        ];
+        // Note: Filename fix if needed (too_bad vs too bad)
+        // I saw 'too bad.mp3' in list_dir, but common web practice is no spaces. 
+        // I'll check the list_dir again for EXACT naming.
+    }
+
     preloadImages() {
         const imagesToPreload = [
-            'Images/Ascensours/cage/vide.jpg',
-            'Images/Ascensours/cage/ouvert 2.png',
-            'Images/Ascensours/cage/ouvert 1.png',
-            'Images/Ascensours/cage/full.png',
-            'Images/Ascensours/ours/frame 1.png',
-            'Images/Ascensours/ours/frame 2.png',
-            'Images/Ascensours/ours/frame 3.png',
-            'Images/Ascensours/ours/happy.png',
-            'Images/Ascensours/ours/miss.png'
+            'Images/Course/running_biche.png'
         ];
 
         imagesToPreload.forEach(src => {
@@ -98,6 +98,8 @@ export class GameManager {
             return;
         }
 
+        this.currentVoiceOutcome = null; // Reset for new game
+
         if (this.currentGame) {
             this.currentGame.cleanup();
         }
@@ -112,6 +114,7 @@ export class GameManager {
         this.currentGame.speedMultiplier = this.speedMultiplier; // <-- apply speed
         this.currentGame.onGameEnd = (isWon) => this.handleGameEnd(isWon);
         this.currentGame.onShowInstruction = (text) => this.showInstruction(text);
+        this.currentGame.onResultVoice = (isWon) => this.playGlobalVoice(isWon); // Ensure reliable voice triggers
 
         // Force a render of the first frame for the transition screen
         this.currentGame.isActive = true;
@@ -143,6 +146,7 @@ export class GameManager {
     }
 
     startRandomLoop() {
+        this.hideHomeScreen();
         this.isLooping = true;
         this.score = 0;
         this.lives = 4;
@@ -189,12 +193,15 @@ export class GameManager {
             console.log(`Speed up! multiplier=${this.speedMultiplier.toFixed(2)}`);
         }
 
-        this.playGlobalVoice(isWon);
-
         setTimeout(() => {
             if (this.lives <= 0) {
                 this.gameOver();
             } else if (this.isLooping) {
+                // Fallback: If no voice played yet, play it at transition start
+                if (this.currentVoiceOutcome === null) {
+                    this.playGlobalVoice(isWon);
+                }
+
                 this.showTransition(
                     () => this.nextRandomGame(true),
                     () => this.startCurrentGame(),
@@ -209,191 +216,94 @@ export class GameManager {
         this.isTransitioning = true;
         this.uiTransition.style.display = 'block';
 
-        this.uiTransition.classList.remove('elevator-zoom-in', 'elevator-zoom-out');
-        void this.uiTransition.offsetWidth; // Force reflow
-
-        const elevatorBg = document.getElementById('elevator-bg');
-        elevatorBg.style.backgroundImage = `url('Images/Ascensours/cage/full.png')`;
-
         this.uiScore.innerText = this.score;
         this.updateLivesUI();
 
-        // Level Display
+        // Prepare next game canvas early
+        if (onPrepare) {
+            this.ctx.fillStyle = '#000';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            onPrepare();
+        }
+
+        // Show Level Display right away
         const currentLevel = this.gamesPlayedTotal + 1;
         this.uiLevelDisplay.innerText = currentLevel;
-        this.uiLevelDisplay.classList.remove('center', 'up');
+        this.uiLevelDisplay.classList.add('center');
 
-        // SPEED UP
-        this.uiSpeedUp.classList.remove('visible');
+        // Show Speed Up if applicable right away
         if (speedUp) this.uiSpeedUp.classList.add('visible');
 
-        // Sequences d'images
-        // When game ends (exiting game), doors CLOSE to hide the game behind them
-        const closeFrames = [
-            'Images/Ascensours/cage/full.png', // open
-            'Images/Ascensours/cage/ouvert 1.png',
-            'Images/Ascensours/cage/ouvert 2.png',
-            'Images/Ascensours/cage/vide.jpg' // closed
-        ];
+        // Start Biche animation right away
+        void this.uiBiche.offsetWidth; // Trigger reflow
+        this.uiBiche.classList.add('biche-running');
 
-        // When starting next game (entering game), doors OPEN to reveal the game
-        const openFrames = [
-            'Images/Ascensours/cage/vide.jpg', // closed
-            'Images/Ascensours/cage/ouvert 2.png',
-            'Images/Ascensours/cage/ouvert 1.png',
-            'Images/Ascensours/cage/full.png' // open
-        ];
+        // Play the Win/Loss jingle immediately
+        let resultAudio;
+        if (isWon) {
+            resultAudio = new Audio('Son/Musique/transi_win.mp3');
+            resultAudio.playbackRate = this.speedMultiplier;
+            resultAudio.preservesPitch = false;
+        } else {
+            const loosePitch = Math.max(0.7, this.speedMultiplier * 0.85);
+            resultAudio = new Audio('Son/Musique/loose_transi.mp3');
+            resultAudio.playbackRate = loosePitch;
+            resultAudio.preservesPitch = false;
+        }
+        resultAudio.play().catch(e => console.warn('Transition result music failed:', e));
 
-        // Ensure UI elements are hidden until closed
-        this.uiElevatorBear.style.opacity = 0;
-        this.uiScore.style.opacity = 0;
-        this.uiLives.style.opacity = 0;
+        // Start the main transi.mp3 audio exactly when the jingle is ending
+        const transiAudio = new Audio('Son/Musique/transi.mp3');
+        transiAudio.playbackRate = this.speedMultiplier;
+        transiAudio.preservesPitch = false;
 
-        const animateFrames = (frames, interval, callback) => {
-            let f = 0;
-            elevatorBg.style.backgroundImage = `url('${frames[f]}')`;
-            f++;
-            const timer = setInterval(() => {
-                if (f >= frames.length) {
-                    clearInterval(timer);
-                    if (callback) callback();
-                    return;
-                }
-                elevatorBg.style.backgroundImage = `url('${frames[f]}')`;
-                f++;
-            }, interval);
+        const startTransi = () => {
+            if (transiAudio.hasStarted) return;
+            transiAudio.hasStarted = true;
+            transiAudio.play().catch(e => console.warn('transi.mp3 failed:', e));
         };
 
-        const doEnd = () => {
-            if (!this.isTransitioning) return;
-            this.stopBearAnimation();
-            this.uiTransition.style.display = 'none';
-            this.uiSpeedUp.classList.remove('visible');
-            this.uiLevelDisplay.classList.remove('center', 'up');
-            this.isTransitioning = false;
-
-            // Start the next game!
-            if (onStart) onStart();
-        };
-
-        const guardedEnd = () => { doEnd(); };
-
-        // --- Sequence Start ---
-        setTimeout(() => {
-            // 1. Fermeture Rapide
-            animateFrames(closeFrames, 80, () => {
-                // Ascenseur fermé. Prepare next game!
-                if (onPrepare) {
-                    this.ctx.fillStyle = '#000';
-                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-                    onPrepare();
-                }
-
-                this.uiElevatorBear.style.opacity = 1;
-                this.uiScore.style.opacity = 1;
-                this.uiLives.style.opacity = 1;
-                setTimeout(() => { this.uiLevelDisplay.classList.add('center'); }, 50);
-
-                // 2. Musique et Résultat
-                if (isWon) {
-                    this.uiElevatorBear.src = 'Images/Ascensours/ours/happy.png';
-                    const audio = new Audio('Son/Musique/transi_win.mp3');
-                    audio.playbackRate = this.speedMultiplier;
-                    audio.play().catch(e => console.warn('Transition music failed:', e));
-
-                    let nextTriggered = false;
-                    audio.addEventListener('timeupdate', () => {
-                        // Mix transi.mp3 slightly before win finishes
-                        if (!nextTriggered && audio.currentTime >= audio.duration - 0.4) {
-                            nextTriggered = true;
-                            this.startBearIdle();
-                            this.playTransiLoop(guardedEnd, openFrames);
-                        }
-                    });
-                    audio.addEventListener('ended', () => {
-                        if (!nextTriggered) {
-                            nextTriggered = true;
-                            this.startBearIdle();
-                            this.playTransiLoop(guardedEnd, openFrames);
-                        }
-                    }, { once: true });
-                } else {
-                    this.uiElevatorBear.src = 'Images/Ascensours/ours/miss.png';
-                    const loosePitch = Math.max(0.7, this.speedMultiplier * 0.85);
-                    const audioLoose = new Audio('Son/Musique/loose_transi.mp3');
-                    audioLoose.playbackRate = loosePitch;
-                    audioLoose.play().catch(e => console.warn('loose_transi failed:', e));
-
-                    audioLoose.addEventListener('ended', () => {
-                        this.startBearIdle();
-                        this.playTransiLoop(guardedEnd, openFrames);
-                    }, { once: true });
-                }
-            });
-        }, 150);
-    }
-
-    playTransiLoop(guardedEnd, openFrames) {
-        const audioTransi = new Audio('Son/Musique/transi.mp3');
-        audioTransi.playbackRate = this.speedMultiplier;
-        audioTransi.play().catch(e => console.warn('transi failed:', e));
-
-        let openTriggered = false;
-
-        // Trigger opening BEFORE the very end of transi
-        audioTransi.addEventListener('timeupdate', () => {
-            if (!openTriggered && audioTransi.currentTime >= audioTransi.duration - 1.0 / this.speedMultiplier) {
-                openTriggered = true;
-                this.uiLevelDisplay.classList.add('up');
-
-                // Masquer le score et l'ours pour l'ouverture
-                this.uiElevatorBear.style.opacity = 0;
-                this.uiScore.style.opacity = 0;
-                this.uiLives.style.opacity = 0;
-                this.uiSpeedUp.classList.remove('visible');
-
-                // Ouverture Rapide
-                const elevatorBg = document.getElementById('elevator-bg');
-                let f = 0;
-                elevatorBg.style.backgroundImage = `url('${openFrames[f]}')`;
-                f++;
-                const timer = setInterval(() => {
-                    if (f >= openFrames.length) {
-                        clearInterval(timer);
-                        // Start Zoom Effect
-                        this.uiTransition.classList.remove('elevator-zoom-out');
-                        this.uiTransition.classList.add('elevator-zoom-in');
-                        setTimeout(guardedEnd, 400); // Wait for zoom to finish
-                        return;
-                    }
-                    elevatorBg.style.backgroundImage = `url('${openFrames[f]}')`;
-                    f++;
-                }, 80);
-            }
+        // Use precise setTimeout based on duration to avoid timeupdate firing issues at high speeds
+        resultAudio.addEventListener('loadedmetadata', () => {
+            // duration is in seconds. We want 150ms overlap.
+            const overlapSec = 0.15;
+            const targetTime = Math.max(0, resultAudio.duration - overlapSec);
+            // Real time in MS = (Target time / speed) * 1000
+            const delayMs = (targetTime / resultAudio.playbackRate) * 1000;
+            setTimeout(startTransi, delayMs);
         });
 
-        audioTransi.addEventListener('ended', () => {
-            if (!openTriggered) {
-                // Fallback
-                guardedEnd();
-            }
+        // Fallback safety to ensure it plays
+        resultAudio.addEventListener('ended', startTransi);
+        resultAudio.addEventListener('error', () => {
+            console.warn('Result audio failed, starting transi.mp3 after a delay.');
+            setTimeout(startTransi, 500);
         }, { once: true });
-    }
 
-    startBearIdle() {
-        this.stopBearAnimation();
-        this.bearFrame = 1;
-        this.bearInterval = setInterval(() => {
-            this.bearFrame = (this.bearFrame % 3) + 1;
-            this.uiElevatorBear.src = `Images/Ascensours/ours/frame ${this.bearFrame}.png`;
-        }, 150 / this.speedMultiplier);
-    }
 
-    stopBearAnimation() {
-        if (this.bearInterval) {
-            clearInterval(this.bearInterval);
-            this.bearInterval = null;
-        }
+        // The transition length is strictly bound to the end of the transi.mp3 beating theme
+        transiAudio.addEventListener('ended', () => {
+            if (!this.isTransitioning) return;
+            this.uiTransition.style.display = 'none';
+            this.uiBiche.classList.remove('biche-running');
+            this.uiSpeedUp.classList.remove('visible');
+            this.uiLevelDisplay.classList.remove('center');
+            this.isTransitioning = false;
+            if (onStart) onStart();
+        }, { once: true });
+
+        // Fallback if audio fails to load/play
+        transiAudio.addEventListener('error', () => {
+            setTimeout(() => {
+                if (!this.isTransitioning) return;
+                this.uiTransition.style.display = 'none';
+                this.uiBiche.classList.remove('biche-running');
+                this.uiSpeedUp.classList.remove('visible');
+                this.uiLevelDisplay.classList.remove('center');
+                this.isTransitioning = false;
+                if (onStart) onStart();
+            }, 3000 / this.speedMultiplier);
+        }, { once: true });
     }
 
     gameOver() {
@@ -410,16 +320,43 @@ export class GameManager {
     }
 
     playGlobalVoice(isWon) {
+        if (this.currentVoiceOutcome !== null) {
+            console.log(`GameManager: Voice already triggered for this game (${this.currentVoiceOutcome})`);
+            return;
+        }
+        this.currentVoiceOutcome = isWon;
+
         let src;
         if (isWon) {
-            // Always play Biche.mp3 on win
             src = 'Son/Voix/clear/Biche.mp3';
         } else {
             const sounds = ['nice try.mp3', 'oh no.mp3', 'too bad.mp3'];
             src = `Son/Voix/lost/${sounds[Math.floor(Math.random() * sounds.length)]}`;
         }
-        const audio = new Audio(src);
-        audio.play().catch(e => console.warn("Global voice failed:", e));
+
+        console.log(`GameManager: Playing result voice: ${src}`);
+
+        try {
+            if (this.voiceAudio) {
+                this.voiceAudio.pause();
+                this.voiceAudio.src = src;
+                this.voiceAudio.volume = 0.7;
+                this.voiceAudio.playbackRate = 1.0; // Keep voice pitch normal
+                this.voiceAudio.play().then(() => {
+                    console.log(`GameManager: Voice playing successfully: ${src}`);
+                }).catch(e => {
+                    console.warn(`GameManager: Voice playback failed for ${src}:`, e);
+                });
+            } else {
+                // Fallback if preload failed for some reason
+                const audio = new Audio(src);
+                audio.volume = 0.7;
+                audio.playbackRate = 1.0; // Keep voice pitch normal
+                audio.play().catch(console.warn);
+            }
+        } catch (err) {
+            console.error("GameManager: Error in playGlobalVoice:", err);
+        }
     }
 
     showInstruction(text) {
@@ -470,15 +407,29 @@ export class GameManager {
                 this.uiTimer.innerText = Math.ceil(this.currentGame.timeLeft);
             }
         } else {
-            // Idle screen: don't clear immediateley if we want to see the last result
-            // Clear only if no instruction is visible or after a long idle?
-            // For now, let's just make sure we don't clear if an instruction like "GAGNÉ" is up
-            if (!this.uiInstruction.classList.contains('visible')) {
+            // Idle screen
+            if (!this.uiInstruction.classList.contains('visible') && (!this.uiHomeScreen || this.uiHomeScreen.style.display !== 'none')) {
                 this.ctx.fillStyle = '#222';
                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             }
         }
 
         requestAnimationFrame(this.loop);
+    }
+
+    showHomeScreen() {
+        if (this.uiHomeScreen) {
+            this.uiHomeScreen.style.display = 'flex';
+            this.uiHomeScreen.classList.remove('hidden');
+        }
+    }
+
+    hideHomeScreen() {
+        if (this.uiHomeScreen) {
+            this.uiHomeScreen.classList.add('hidden');
+            setTimeout(() => {
+                this.uiHomeScreen.style.display = 'none';
+            }, 500);
+        }
     }
 }

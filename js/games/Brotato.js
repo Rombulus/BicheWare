@@ -76,6 +76,7 @@ export class Brotato extends MiniGame {
         });
 
         if (aliveCount === 0) {
+            this.triggerResultVoice(true);
             this.win();
         }
     }

@@ -88,7 +88,7 @@ export class Tournesol extends MiniGame {
             if (!this.waterSound) {
                 this.waterSound = this.playSound('Son/SFX/Tournesol/water.mp3', true);
             }
-            this.waterTime += dt;
+            this.waterTime += dt * this.speedMultiplier;
             if (this.waterTime >= this.requiredTime) {
                 this.triggerWin();
             }
@@ -103,6 +103,7 @@ export class Tournesol extends MiniGame {
 
     triggerWin() {
         if (this.isWon) return;
+        this.triggerResultVoice(true);
         this.win();
         if (this.waterSound) {
             this.waterSound.pause();

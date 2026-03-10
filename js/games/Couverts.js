@@ -93,6 +93,7 @@ export class Couverts extends MiniGame {
 
     checkWin() {
         if (this.items.every(i => i.placed)) {
+            this.triggerResultVoice(true);
             this.win();
         }
     }

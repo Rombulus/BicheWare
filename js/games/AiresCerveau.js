@@ -133,6 +133,7 @@ export class AiresCerveau extends MiniGame {
 
     triggerWin() {
         if (this.isWon) return;
+        this.triggerResultVoice(true);
         this.win();
         if (this.scratchSound) {
             this.scratchSound.pause();

@@ -78,8 +78,10 @@ export class Piano extends MiniGame {
                 setTimeout(() => { this.activeKeyIndex = -1; }, 200); // Clear effect
 
                 if (key.index === this.targetNoteIndex) {
+                    this.triggerResultVoice(true);
                     this.win();
                 } else {
+                    this.triggerResultVoice(false);
                     this.endGame();
                 }
                 return;
