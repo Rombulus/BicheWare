@@ -44,16 +44,15 @@ export class Liste extends MiniGame {
     start() {
         super.start();
         console.log("Liste Start V7 - Rewrite");
-        this.timeLeft = 8.0;
+        this.timeLeft = 5.0; // Reduced from 8.0 for better pacing
 
         // Reset drawing state
         this.currentStroke = [];
         this.allStrokes = [];
 
-        // Pick 2 distinct random line images
+        // Pick 1 random line image
         const indices = [0, 1, 2];
-        indices.sort(() => Math.random() - 0.5);
-        const chosen = [indices[0], indices[1]];
+        const chosenIdx = indices[Math.floor(Math.random() * indices.length)];
 
         // Place items on the page, vertically stacked with good spacing
         // The page.png covers roughly x:120-720, y:60-870 on a 800x600 canvas
@@ -66,25 +65,23 @@ export class Liste extends MiniGame {
         const itemH = 55;
         const startX = Math.round(cw * 0.22);
 
-        // Two fixed vertical positions, well separated
-        const yPositions = [
-            Math.round(ch * 0.35),
-            Math.round(ch * 0.58)
-        ];
+        // One item placed in the center
+        const centerY = Math.round(ch * 0.48);
 
-        this.items = chosen.map((imgIdx, i) => ({
-            id: i,
-            img: this.lineImgs[imgIdx],
+        this.items = [{
+            id: 0,
+            img: this.lineImgs[chosenIdx],
             x: startX,
-            y: yPositions[i],
+            y: centerY,
             w: itemW,
             h: itemH,
             crossed: false
-        }));
+        }];
 
-        this.canvas.addEventListener('mousedown', this.handleDown);
-        window.addEventListener('mousemove', this.handleMove);
-        window.addEventListener('mouseup', this.handleUp);
+        this.canvas.addEventListener('pointerdown', this.handleDown);
+        window.addEventListener('pointermove', this.handleMove);
+        window.addEventListener('pointerup', this.handleUp);
+        window.addEventListener('pointercancel', this.handleUp);
 
         this.scribeSound = null;
     }
@@ -93,6 +90,7 @@ export class Liste extends MiniGame {
 
     handleDown(e) {
         if (!this.isActive) return;
+        this.capturePointer(e);
         this.isDrawing = true;
         this.currentStroke = [];
         this.addPoint(e);
@@ -115,13 +113,10 @@ export class Liste extends MiniGame {
         // Check if any item is now crossed by this stroke
         this.checkCrossings(this.currentStroke);
         this.currentStroke = [];
+        this.releasePointer(e);
 
-        // Immediately win if all items crossed
-        if (this.items.every(item => item.crossed)) {
-            this.triggerResultVoice(true);
-            this.win();
-            this.endGame();
-        }
+        // REMOVED: Immediate win trigger. 
+        // We now wait for the timer to expire to know what happens.
     }
 
     addPoint(e) {
@@ -190,6 +185,7 @@ export class Liste extends MiniGame {
             if (this.items.every(item => item.crossed)) {
                 this.win();
             }
+            this.triggerResultVoice(this.isWon);
             this.endGame(); // called exactly once
         }
     }
@@ -247,9 +243,10 @@ export class Liste extends MiniGame {
 
     cleanup() {
         super.cleanup();
-        this.canvas.removeEventListener('mousedown', this.handleDown);
-        window.removeEventListener('mousemove', this.handleMove);
-        window.removeEventListener('mouseup', this.handleUp);
+        this.canvas.removeEventListener('pointerdown', this.handleDown);
+        window.removeEventListener('pointermove', this.handleMove);
+        window.removeEventListener('pointerup', this.handleUp);
+        window.removeEventListener('pointercancel', this.handleUp);
     }
 
     getInstruction() {

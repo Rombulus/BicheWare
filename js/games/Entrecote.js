@@ -51,7 +51,7 @@ export class Entrecote extends MiniGame {
         this.currentItem = null;
         this.itemX = this.startX;
 
-        this.canvas.addEventListener('mousedown', this.handleClick);
+        this.canvas.addEventListener('pointerdown', this.handleClick);
         this.playSound('Son/SFX/Entrecote/fond.mp3', true);
     }
 
@@ -59,16 +59,14 @@ export class Entrecote extends MiniGame {
         super.cleanup();
         const timerContainer = document.getElementById('bomb-timer-container');
         if (timerContainer) timerContainer.style.display = 'flex';
-        this.canvas.removeEventListener('mousedown', this.handleClick);
+        this.canvas.removeEventListener('pointerdown', this.handleClick);
     }
 
 
     handleClick(e) {
         if (!this.isActive || this.state !== 'showing') return;
 
-        const rect = this.canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const { x: mx, y: my } = this.getCanvasPoint(e);
 
         if (mx > this.itemX && mx < this.itemX + 300 && my > this.itemY && my < this.itemY + 300) {
             if (this.currentItem.type === 'waiter') {

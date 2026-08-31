@@ -7,17 +7,17 @@ export class Piano extends MiniGame {
         this.bg = new Image();
         this.bg.src = 'Images/Piano/piano.png';
 
-        // Keys
+        // Keys: Recalculated for better alignment on 800px canvas
         this.keys = [];
-        const startX = 50;
-        const keyW = 80;
+        const startX = 40; 
+        const keyW = 103; 
         const keyH = 400;
         const freqs = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88];
 
         for (let i = 0; i < 7; i++) {
             this.keys.push({
                 x: startX + i * keyW,
-                y: 100,
+                y: 110,
                 w: keyW,
                 h: keyH,
                 freq: freqs[i],
@@ -34,26 +34,32 @@ export class Piano extends MiniGame {
 
     start() {
         super.start();
-        console.log("Piano Start V4");
-
-        this.canvas.addEventListener('mousedown', this.handleClick);
+        console.log("Piano Start V5 - Alignment Fix");
 
         this.targetNoteIndex = Math.floor(Math.random() * 7);
         this.activeKeyIndex = -1;
+        this.isPlayingSequence = true;
 
         if (!this.audioCtx) {
-            this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            this.audioCtx = window.gameAudioContext || new (window.AudioContext || window.webkitAudioContext)();
+            this.ownsAudioContext = !window.gameAudioContext;
         }
 
-        // Resume immediately to avoid first note delay/glitch
         if (this.audioCtx.state === 'suspended') {
             this.audioCtx.resume();
         }
 
+        // Difficulty adjustment: Play target note twice 
         setTimeout(() => {
             this.playTargetNote();
-        }, 500);
-
+            setTimeout(() => {
+                this.playTargetNote();
+                setTimeout(() => {
+                    this.isPlayingSequence = false;
+                    this.canvas.addEventListener('pointerdown', this.handleClick);
+                }, 800);
+            }, 800);
+        }, 600);
     }
 
     playTargetNote() {
@@ -64,9 +70,7 @@ export class Piano extends MiniGame {
     handleClick(e) {
         if (!this.isActive) return;
 
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const { x, y } = this.getCanvasPoint(e);
 
         for (let key of this.keys) {
             if (x > key.x && x < key.x + key.w &&
@@ -78,8 +82,13 @@ export class Piano extends MiniGame {
                 setTimeout(() => { this.activeKeyIndex = -1; }, 200); // Clear effect
 
                 if (key.index === this.targetNoteIndex) {
-                    this.triggerResultVoice(true);
-                    this.win();
+                    this.isWon = true;
+                    // We don't call triggerResultVoice immediately to let the note play
+                    setTimeout(() => {
+                        this.triggerResultVoice(true);
+                        this.win();
+                        this.endGame();
+                    }, 500);
                 } else {
                     this.triggerResultVoice(false);
                     this.endGame();
@@ -168,8 +177,12 @@ export class Piano extends MiniGame {
     }
 
     cleanup() {
-        this.canvas.removeEventListener('mousedown', this.handleClick);
-        if (this.audioCtx) this.audioCtx.close();
+        this.canvas.removeEventListener('pointerdown', this.handleClick);
+        if (this.audioCtx && this.ownsAudioContext) this.audioCtx.close();
         this.audioCtx = null;
+    }
+
+    getInstruction() {
+        return "JOUE !";
     }
 }

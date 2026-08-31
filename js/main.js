@@ -17,6 +17,9 @@ import { Capture } from './games/Capture.js';
 
 const gameManager = new GameManager();
 
+const devMode = new URLSearchParams(window.location.search).has('dev');
+document.body.classList.toggle('dev-mode', devMode);
+
 // --- Dev Mode Logic ---
 const gameSelector = document.getElementById('game-selector');
 const startBtn = document.getElementById('start-game-btn');
@@ -52,6 +55,7 @@ gamesList.forEach(game => {
 });
 
 startBtn.addEventListener('click', () => {
+    gameManager.unlockAudio();
     const selectedGame = gameSelector.value;
     if (selectedGame) {
         gameManager.startGame(selectedGame);

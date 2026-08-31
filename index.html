@@ -3,7 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1a102d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Jeu de la biche">
+    <link rel="manifest" href="manifest.webmanifest">
     <title>Le jeu de la biche</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/timer.css">
@@ -17,16 +22,18 @@
 <body>
     <div id="home-screen">
         <h1 id="home-title">Le jeu de la biche</h1>
+        <div id="high-score-container">
+            <span class="high-score-label">RECORD</span>
+            <span id="high-score-value">0</span>
+        </div>
         <button id="start-button">DÉMARRER</button>
-    </div>
     </div>
     <div id="transition-screen">
         <div id="transition-bg"></div>
         <div id="biche-runner"></div>
         <div id="level-display">1</div>
-        <div id="score-display">0</div>
-        <div id="speed-up-label">SPEED UP!</div>
         <div id="lives-container"></div>
+        <div id="speed-up-label">SPEED UP!</div>
         <div id="leaderboard" class="hidden"></div>
     </div>
     <div id="game-container">
@@ -54,11 +61,22 @@
                             </div>
                         </div>
                     </div>
+
+                    <div id="touch-controls" aria-label="Contrôles tactiles">
+                        <div id="flight-controls" class="touch-control-set" aria-label="Contrôles de vol">
+                            <button type="button" class="touch-control up" data-control="ArrowUp" aria-label="Monter">▲</button>
+                            <div class="touch-control-row">
+                                <button type="button" class="touch-control" data-control="ArrowLeft" aria-label="Aller à gauche">◀</button>
+                                <button type="button" class="touch-control" data-control="ArrowDown" aria-label="Descendre">▼</button>
+                                <button type="button" class="touch-control" data-control="ArrowRight" aria-label="Aller à droite">▶</button>
+                            </div>
+                        </div>
+                        <div id="running-controls" class="touch-control-set" aria-label="Contrôles de course">
+                            <button type="button" class="touch-control" data-control="ArrowLeft" aria-label="Courir à gauche">◀</button>
+                            <button type="button" class="touch-control" data-control="ArrowRight" aria-label="Courir à droite">▶</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div id="game-hud">
-                <div id="hud-score">SCORE: <span id="current-score">0</span></div>
-                <div id="hud-lives"></div>
             </div>
         </div>
     </div>

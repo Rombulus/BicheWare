@@ -18,12 +18,13 @@ export class Capture extends MiniGame {
 
         this.cowX = -200;
         this.cowY = 400;
-        this.cowSpeed = 800;
+        this.cowSpeed = 800; // Reverted to original speed
 
         this.captureZone = { x: 300, y: 400, w: 200, h: 100 };
 
         this.captured = false;
         this.hasLaunched = false;
+        this.hasAttempted = false; // Only one shot allowed
 
         this.handleInput = this.handleInput.bind(this);
     }
@@ -32,30 +33,37 @@ export class Capture extends MiniGame {
         super.start();
         console.log("Capture Start V2");
 
-        this.cowX = -200;
         this.cowY = 400;
         this.captured = false;
         this.hasLaunched = false;
+        this.hasAttempted = false;
 
         setTimeout(() => {
             this.hasLaunched = true;
         }, 200 + Math.random() * 1000);
 
-        window.addEventListener('mousedown', this.handleInput);
+        window.addEventListener('pointerdown', this.handleInput);
         window.addEventListener('keydown', this.handleInput);
 
         this.playSound('Son/SFX/UFO/ufo.mp3', true);
     }
 
     handleInput() {
-        if (!this.isActive || this.captured) return;
+        if (!this.isActive || this.captured || this.hasAttempted) return;
 
-        if (this.cowX > 250 && this.cowX < 550) {
+        this.hasAttempted = true; // Mark that the player has used their one attempt
+
+        const cowCenter = this.cowX + 75;
+        if (cowCenter > 310 && cowCenter < 490) {
             this.captured = true;
-            // Removed stopAllSounds() to keep UFO hum
             this.playSound('Son/SFX/UFO/ray.mp3');
-            this.triggerResultVoice(true);
+            // We DON'T call win() or triggerResultVoice(true) here anymore
+            // to follow the "wait for timer" rule. 
+            // BUT we mark it won internally.
             this.win();
+        } else {
+            console.log("Capture: Missed! Cow center at", cowCenter);
+            this.isWon = false;
         }
     }
 
@@ -66,7 +74,7 @@ export class Capture extends MiniGame {
         if (this.hasLaunched && !this.captured) {
             this.cowX += this.cowSpeed * dt;
             if (this.cowX > this.canvas.width + 200) {
-                this.endGame();
+                // Cow is gone, wait for timer to end normally via super.update
             }
         }
 
@@ -124,11 +132,45 @@ export class Capture extends MiniGame {
     }
 
     cleanup() {
-        window.removeEventListener('mousedown', this.handleInput);
+        window.removeEventListener('pointerdown', this.handleInput);
         window.removeEventListener('keydown', this.handleInput);
     }
 
     getInstruction() {
         return "CAPTURE !";
+    }
+
+    // Overriding update to ensure victory trigger happens at the very end
+    update(dt) {
+        if (!this.isActive) return;
+        
+        // Manual countdown
+        const scaledDt = dt * this.speedMultiplier;
+        this.timeLeft -= scaledDt;
+        this.bombTimer.update(scaledDt);
+
+        // Core logic
+        this.internalUpdate(dt);
+
+        if (this.timeLeft <= 0) {
+            this.triggerResultVoice(this.isWon);
+            this.endGame();
+        }
+    }
+
+    internalUpdate(dt) {
+        // This is the original update logic without the timer endGame call
+        if (this.hasLaunched && !this.captured) {
+            this.cowX += this.cowSpeed * dt;
+        }
+
+        if (this.captured) {
+            this.cowX = 325;
+            if (this.cowY > 40) {
+                this.cowY -= 600 * dt;
+            }
+            this.cowRotation = (this.cowRotation || 0) + 15 * dt;
+            this.cowScale = Math.max(0, (this.cowScale === undefined ? 1 : this.cowScale) - 1.4 * dt);
+        }
     }
 }

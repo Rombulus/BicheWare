@@ -55,7 +55,7 @@ export class FindBear extends MiniGame {
         this.flashColor = null;
         this.flashTimer = 0;
 
-        this.canvas.addEventListener('mousedown', this.handleClick);
+        this.canvas.addEventListener('pointerdown', this.handleClick);
         const bgm = this.playSound('Son/SFX/BearFind/musique.mp3', true);
         if (bgm) bgm.volume = 1.0; // Ensure max volume
     }
@@ -63,9 +63,7 @@ export class FindBear extends MiniGame {
     handleClick(e) {
         if (!this.isActive) return;
 
-        const rect = this.canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const { x: mx, y: my } = this.getCanvasPoint(e);
 
         for (let i = this.objects.length - 1; i >= 0; i--) {
             const obj = this.objects[i];
@@ -132,5 +130,10 @@ export class FindBear extends MiniGame {
 
     getInstruction() {
         return "TROUVE L'OURS !";
+    }
+
+    cleanup() {
+        super.cleanup();
+        this.canvas.removeEventListener('pointerdown', this.handleClick);
     }
 }

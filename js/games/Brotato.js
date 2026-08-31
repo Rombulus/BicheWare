@@ -43,14 +43,14 @@ export class Brotato extends MiniGame {
             });
         }
 
-        window.addEventListener('mousemove', this.handleMove);
+        window.addEventListener('pointermove', this.handleMove);
         this.playSound('Son/SFX/Brotato/ost.mp3', true);
     }
 
     handleMove(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        this.player.x = e.clientX - rect.left;
-        this.player.y = e.clientY - rect.top;
+        const { x, y } = this.getCanvasPoint(e);
+        this.player.x = x;
+        this.player.y = y;
     }
 
     update(dt) {
@@ -122,6 +122,6 @@ export class Brotato extends MiniGame {
     }
 
     cleanup() {
-        window.removeEventListener('mousemove', this.handleMove);
+        window.removeEventListener('pointermove', this.handleMove);
     }
 }

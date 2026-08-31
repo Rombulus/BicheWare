@@ -41,18 +41,18 @@ export class Couverts extends MiniGame {
         this.items[2].x = 600; this.items[2].y = 450;
         this.items.forEach(i => i.placed = false);
 
-        this.canvas.addEventListener('mousedown', this.handleDown);
-        window.addEventListener('mousemove', this.handleMove);
-        window.addEventListener('mouseup', this.handleUp);
+        this.canvas.addEventListener('pointerdown', this.handleDown);
+        window.addEventListener('pointermove', this.handleMove);
+        window.addEventListener('pointerup', this.handleUp);
+        window.addEventListener('pointercancel', this.handleUp);
 
         this.playSound('Son/SFX/Couverts/couverts.mp3', true);
         this.playSound('Son/SFX/Entrecote/fond.mp3', true); // Re-using restaurant background sound
     }
 
     handleDown(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const { x: mx, y: my } = this.getCanvasPoint(e);
+        this.capturePointer(e);
 
         for (let item of this.items) {
             if (item.placed) continue;
@@ -68,13 +68,13 @@ export class Couverts extends MiniGame {
 
     handleMove(e) {
         if (this.draggedItem) {
-            const rect = this.canvas.getBoundingClientRect();
-            this.draggedItem.x = e.clientX - rect.left - this.dragOffset.x;
-            this.draggedItem.y = e.clientY - rect.top - this.dragOffset.y;
+            const { x, y } = this.getCanvasPoint(e);
+            this.draggedItem.x = x - this.dragOffset.x;
+            this.draggedItem.y = y - this.dragOffset.y;
         }
     }
 
-    handleUp() {
+    handleUp(e) {
         if (this.draggedItem) {
             const item = this.draggedItem;
             const cx = item.x + item.w / 2;
@@ -89,6 +89,7 @@ export class Couverts extends MiniGame {
             this.draggedItem = null;
             this.checkWin();
         }
+        if (e) this.releasePointer(e);
     }
 
     checkWin() {
@@ -127,5 +128,13 @@ export class Couverts extends MiniGame {
 
     getInstruction() {
         return "RANGE TOUT !";
+    }
+
+    cleanup() {
+        super.cleanup();
+        this.canvas.removeEventListener('pointerdown', this.handleDown);
+        window.removeEventListener('pointermove', this.handleMove);
+        window.removeEventListener('pointerup', this.handleUp);
+        window.removeEventListener('pointercancel', this.handleUp);
     }
 }

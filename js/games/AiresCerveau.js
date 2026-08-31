@@ -63,9 +63,10 @@ export class AiresCerveau extends MiniGame {
         // Pick one target zone
         this.targetZoneIndex = Math.floor(Math.random() * 4);
 
-        this.canvas.addEventListener('mousedown', this.handleDown);
-        window.addEventListener('mousemove', this.handleMove);
-        window.addEventListener('mouseup', this.handleUp);
+        this.canvas.addEventListener('pointerdown', this.handleDown);
+        window.addEventListener('pointermove', this.handleMove);
+        window.addEventListener('pointerup', this.handleUp);
+        window.addEventListener('pointercancel', this.handleUp);
     }
 
     isPointInPolygon(point, polygon) {
@@ -81,24 +82,26 @@ export class AiresCerveau extends MiniGame {
     }
 
     handleDown(e) {
+        this.capturePointer(e);
         this.isRubbing = true;
-        this.lastMouse = { x: e.clientX, y: e.clientY };
+        this.lastMouse = this.getCanvasPoint(e);
     }
 
-    handleUp() {
+    handleUp(e) {
         this.isRubbing = false;
         this.lastMouse = null;
         if (this.scratchSound) {
             this.scratchSound.pause();
             this.scratchSound = null;
         }
+        if (e) this.releasePointer(e);
     }
 
     handleMove(e) {
         if (this.isRubbing && this.lastMouse && !this.isWon) {
-            const rect = this.canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            const point = this.getCanvasPoint(e);
+            const mouseX = point.x;
+            const mouseY = point.y;
 
             const z = this.zones[this.targetZoneIndex];
             let inZone = false;
@@ -113,8 +116,8 @@ export class AiresCerveau extends MiniGame {
                     this.scratchSound = this.playSound('Son/SFX/AireCerveau/scratch.mp3', true);
                 }
 
-                const dx = Math.abs(e.clientX - this.lastMouse.x);
-                const dy = Math.abs(e.clientY - this.lastMouse.y);
+                const dx = Math.abs(point.x - this.lastMouse.x);
+                const dy = Math.abs(point.y - this.lastMouse.y);
                 const dist = dx + dy;
 
                 this.rubScore += dist * 0.5;
@@ -127,7 +130,7 @@ export class AiresCerveau extends MiniGame {
                     this.scratchSound = null;
                 }
             }
-            this.lastMouse = { x: e.clientX, y: e.clientY };
+            this.lastMouse = point;
         }
     }
 
@@ -179,9 +182,8 @@ export class AiresCerveau extends MiniGame {
         }
 
         if (this.isRubbing && !this.isWon) {
-            const rect = this.canvas.getBoundingClientRect();
-            const lastX = this.lastMouse ? this.lastMouse.x - rect.left : 0;
-            const lastY = this.lastMouse ? this.lastMouse.y - rect.top : 0;
+            const lastX = this.lastMouse ? this.lastMouse.x : 0;
+            const lastY = this.lastMouse ? this.lastMouse.y : 0;
 
             // Visual feedback
             const z = this.zones[this.targetZoneIndex];
@@ -208,8 +210,9 @@ export class AiresCerveau extends MiniGame {
     }
 
     cleanup() {
-        this.canvas.removeEventListener('mousedown', this.handleDown);
-        window.removeEventListener('mousemove', this.handleMove);
-        window.removeEventListener('mouseup', this.handleUp);
+        this.canvas.removeEventListener('pointerdown', this.handleDown);
+        window.removeEventListener('pointermove', this.handleMove);
+        window.removeEventListener('pointerup', this.handleUp);
+        window.removeEventListener('pointercancel', this.handleUp);
     }
 }

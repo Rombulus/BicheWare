@@ -32,39 +32,43 @@ export class GratteFizz extends MiniGame {
         this.lastMouse = null;
         this.pantPlayed = false;
 
-        this.canvas.addEventListener('mousedown', this.handleDown);
-        window.addEventListener('mousemove', this.handleMove);
-        window.addEventListener('mouseup', this.handleUp);
+        this.canvas.addEventListener('pointerdown', this.handleDown);
+        window.addEventListener('pointermove', this.handleMove);
+        window.addEventListener('pointerup', this.handleUp);
+        window.addEventListener('pointercancel', this.handleUp);
 
         // Placeholder for music
     }
 
     handleDown(e) {
+        this.capturePointer(e);
         this.isRubbing = true;
-        this.lastMouse = { x: e.clientX, y: e.clientY };
+        this.lastMouse = this.getCanvasPoint(e);
         if (!this.isWon && !this.scratchSound) {
             this.scratchSound = this.playSound('Son/SFX/GratteChien/gratte.mp3', true);
         }
     }
 
-    handleUp() {
+    handleUp(e) {
         this.isRubbing = false;
         this.lastMouse = null;
         if (this.scratchSound) {
             this.scratchSound.pause();
             this.scratchSound = null;
         }
+        if (e) this.releasePointer(e);
     }
 
     handleMove(e) {
         if (this.isRubbing && this.lastMouse && !this.isWon) {
-            const dx = Math.abs(e.clientX - this.lastMouse.x);
-            const dy = Math.abs(e.clientY - this.lastMouse.y);
+            const point = this.getCanvasPoint(e);
+            const dx = Math.abs(point.x - this.lastMouse.x);
+            const dy = Math.abs(point.y - this.lastMouse.y);
             const dist = dx + dy;
 
             if (dist > 2) { // Minimal movement to count as scratching
                 this.rubScore += dist * 0.5 * this.speedMultiplier;
-                this.lastMouse = { x: e.clientX, y: e.clientY };
+                this.lastMouse = point;
 
                 if (!this.pantPlayed && this.rubScore > this.requiredRub * 0.8) {
                     this.pantPlayed = true;
@@ -116,9 +120,8 @@ export class GratteFizz extends MiniGame {
             if (this.isRubbing && !this.isWon) {
                 this.ctx.fillStyle = "pink";
                 this.ctx.font = "30px Arial";
-                const rect = this.canvas.getBoundingClientRect();
-                const mx = this.lastMouse ? this.lastMouse.x - rect.left : 0;
-                const my = this.lastMouse ? this.lastMouse.y - rect.top : 0;
+                const mx = this.lastMouse ? this.lastMouse.x : 0;
+                const my = this.lastMouse ? this.lastMouse.y : 0;
                 this.ctx.fillText("♥", mx, my);
             }
         }
@@ -149,5 +152,13 @@ export class GratteFizz extends MiniGame {
 
     getInstruction() {
         return "GRATTE !";
+    }
+
+    cleanup() {
+        super.cleanup();
+        this.canvas.removeEventListener('pointerdown', this.handleDown);
+        window.removeEventListener('pointermove', this.handleMove);
+        window.removeEventListener('pointerup', this.handleUp);
+        window.removeEventListener('pointercancel', this.handleUp);
     }
 }

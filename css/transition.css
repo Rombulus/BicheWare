@@ -10,6 +10,10 @@
     z-index: 2000;
     overflow: hidden;
     border: 4px solid #fff;
+    width: min(800px, calc(100vw - 24px));
+    height: min(600px, calc((100vw - 24px) * 0.75), calc(100dvh - 24px));
+    max-height: calc(100dvh - 24px);
+    aspect-ratio: 4 / 3;
 }
 
 #transition-bg {
@@ -22,6 +26,7 @@
             #f39c12 40px,
             #f39c12 80px);
     animation: bg-slide 2s linear infinite;
+    z-index: 1;
 }
 
 @keyframes bg-slide {
@@ -43,11 +48,11 @@
     background-image: url('../Images/Course/running_biche.png');
     background-size: contain;
     background-repeat: no-repeat;
-    z-index: 2100;
+    z-index: 2600;
 }
 
 .biche-running {
-    animation: biche-run 2s linear forwards;
+    animation: biche-run 1.2s linear forwards;
 }
 
 @keyframes biche-run {
@@ -57,7 +62,7 @@
 
     50% {
         left: 300px;
-        transform: scale(1.1) rotate(5deg);
+        transform: scale(1.2) rotate(10deg);
     }
 
     100% {
@@ -75,7 +80,7 @@
     font-weight: 900;
     color: #fff;
     text-shadow: 5px 5px 0 #000;
-    z-index: 5;
+    z-index: 2500;
     transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275),
         top 0.5s ease-in;
 }
@@ -90,14 +95,7 @@
 }
 
 #score-display {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    font-size: 40px;
-    font-weight: 900;
-    color: #fff;
-    text-shadow: 2px 2px 0 #000;
-    z-index: 5;
+    display: none; /* Removed as requested */
 }
 
 #speed-up-label {
@@ -140,7 +138,7 @@
     transform: translateX(-50%);
     display: flex;
     gap: 15px;
-    z-index: 5;
+    z-index: 2500;
 }
 
 .life-icon {
@@ -182,9 +180,51 @@
     opacity: 0;
 }
 
+@media (max-width: 700px) {
+    #level-display {
+        font-size: clamp(90px, 24vw, 150px);
+    }
+
+    #speed-up-label {
+        font-size: clamp(48px, 13vw, 100px);
+    }
+
+    #leaderboard {
+        width: 90%;
+        padding: 12px;
+    }
+
+    #leaderboard h2 {
+        font-size: clamp(26px, 7vw, 40px);
+        margin-bottom: 12px;
+    }
+
+    .leaderboard-entry {
+        font-size: clamp(20px, 5vw, 28px);
+        padding: 8px 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #transition-bg,
+    #biche-runner,
+    #level-display,
+    #speed-up-label,
+    .life-icon {
+        animation: none !important;
+    }
+}
+
 /* Game Over Screen Overrides */
 #transition-screen.game-over {
     background-color: #c0392b;
+    animation: glitch-color 0.1s infinite;
+}
+
+@keyframes glitch-color {
+    0% { background-color: #c0392b; }
+    50% { background-color: #a93226; }
+    100% { background-color: #c0392b; }
 }
 
 #transition-screen.game-over #transition-bg {
@@ -195,13 +235,35 @@
             #962d22 80px);
 }
 
-#transition-screen.game-over #score-display::after {
-    content: 'DOMMAGE...';
-    display: block;
-    font-size: 60px;
-    margin-top: 20px;
-    color: #fff;
-    text-shadow: 4px 4px 0px #000;
+#transition-screen.game-over::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15),
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+    );
+    pointer-events: none;
+    z-index: 2300;
+}
+
+#transition-screen.game-over #level-display {
+    animation: glitch-text 0.2s infinite;
+}
+
+@keyframes glitch-text {
+    0% { transform: translate(-50%, -50%) skew(0deg); }
+    20% { transform: translate(-52%, -48%) skew(10deg); filter: hue-rotate(90deg); }
+    40% { transform: translate(-48%, -52%) skew(-10deg); }
+    60% { transform: translate(-51%, -50%) skew(5deg); }
+    80% { transform: translate(-50%, -51%) skew(-5deg); filter: hue-rotate(-90deg); }
+    100% { transform: translate(-50%, -50%) skew(0deg); }
 }
 
 #leaderboard {
@@ -303,4 +365,3 @@
     0% { transform: scale(1); opacity: 0.3; }
     100% { transform: scale(1.1); opacity: 0.5; }
 }
-

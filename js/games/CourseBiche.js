@@ -51,14 +51,20 @@ export class CourseBiche extends MiniGame {
     handleKeyDown(e) {
         if (!this.isActive || this.isFinished) return;
 
+        this.handleDirection(e.code);
+    }
+
+    handleDirection(direction) {
+        if (!this.isActive || this.isFinished) return;
+
         let moved = false;
-        if (e.code === 'ArrowLeft') {
+        if (direction === 'ArrowLeft') {
             if (this.lastInput !== 'left') {
                 this.lastInput = 'left';
                 this.prompt = "right";
                 moved = true;
             }
-        } else if (e.code === 'ArrowRight') {
+        } else if (direction === 'ArrowRight') {
             if (this.lastInput !== 'right') {
                 this.lastInput = 'right';
                 this.prompt = "left";
@@ -72,6 +78,12 @@ export class CourseBiche extends MiniGame {
             if (this.interactions >= this.requiredInteractions) {
                 this.triggerWin();
             }
+        }
+    }
+
+    setVirtualControl(control, isPressed) {
+        if (isPressed && (control === 'ArrowLeft' || control === 'ArrowRight')) {
+            this.handleDirection(control);
         }
     }
 

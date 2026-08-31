@@ -132,3 +132,76 @@
     height: auto;
     margin-bottom: 20px;
 }
+
+#high-score-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 3px solid #00ffff;
+    border-radius: 20px;
+    padding: 10px 30px;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+.high-score-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #00ffff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+}
+
+#high-score-value {
+    font-size: 48px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive home screen for iPad portrait and landscape. */
+#home-screen {
+    min-height: 100dvh;
+    padding: max(24px, var(--safe-top)) max(24px, var(--safe-right)) max(32px, var(--safe-bottom)) max(24px, var(--safe-left));
+    text-align: center;
+}
+
+#home-title {
+    max-width: 100%;
+    font-size: clamp(42px, 11vw, 100px);
+    line-height: 0.98;
+    margin: 0 0 clamp(24px, 6vh, 40px);
+}
+
+#high-score-container {
+    margin-bottom: clamp(24px, 5vh, 30px);
+}
+
+#start-button {
+    min-width: 220px;
+    min-height: 64px;
+    padding: 16px 36px;
+    font-size: clamp(24px, 5vw, 32px);
+    touch-action: manipulation;
+}
+
+@media (max-width: 600px), (max-height: 700px) {
+    #home-title {
+        letter-spacing: -1px;
+    }
+
+    #high-score-value {
+        font-size: 40px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #home-title,
+    #home-screen,
+    #start-button {
+        animation: none;
+    }
+}

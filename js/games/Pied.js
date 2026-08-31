@@ -24,15 +24,13 @@ export class Pied extends MiniGame {
             y: 100 + Math.random() * 400,
             r: 80
         };
-        this.canvas.addEventListener('mousedown', this.handleClick);
+        this.canvas.addEventListener('pointerdown', this.handleClick);
     }
 
     handleClick(e) {
         if (!this.isActive || this.isWon) return;
 
-        const rect = this.canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const { x: mx, y: my } = this.getCanvasPoint(e);
 
         const dx = mx - this.target.x;
         const dy = my - this.target.y;
@@ -77,5 +75,10 @@ export class Pied extends MiniGame {
 
     getInstruction() {
         return "MASSE !";
+    }
+
+    cleanup() {
+        super.cleanup();
+        this.canvas.removeEventListener('pointerdown', this.handleClick);
     }
 }

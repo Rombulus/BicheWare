@@ -35,8 +35,8 @@ export class BearTime extends MiniGame {
 
         this.currentImg = this.imgs[Math.floor(Math.random() * this.imgs.length)];
 
-        window.addEventListener('mousedown', this.handleClick);
-        window.addEventListener('mousemove', this.handleMove);
+        window.addEventListener('pointerdown', this.handleClick);
+        window.addEventListener('pointermove', this.handleMove);
         window.addEventListener('keydown', this.handleKey);
         this.playSound('Son/SFX/Beartime/soundtrack.mp3', true);
     }
@@ -125,8 +125,8 @@ export class BearTime extends MiniGame {
     }
 
     cleanup() {
-        window.removeEventListener('mousedown', this.handleClick);
-        window.removeEventListener('mousemove', this.handleMove);
+        window.removeEventListener('pointerdown', this.handleClick);
+        window.removeEventListener('pointermove', this.handleMove);
         window.removeEventListener('keydown', this.handleKey);
     }
 

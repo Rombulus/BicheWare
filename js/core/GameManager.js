@@ -25,6 +25,10 @@ export class GameManager {
         this.uiCurrentScore = document.getElementById('current-score');
         this.uiHudLives = document.getElementById('hud-lives');
         this.uiFixedInstruction = document.getElementById('fixed-instruction-box');
+        this.uiHighScoreValue = document.getElementById('high-score-value');
+        this.uiTouchControls = document.getElementById('touch-controls');
+        this.uiFlightControls = document.getElementById('flight-controls');
+        this.uiRunningControls = document.getElementById('running-controls');
 
         // Game Loop State
         this.playedGames = new Set();
@@ -34,6 +38,10 @@ export class GameManager {
         this.isTransitioning = false;
         this.currentVoiceOutcome = null;
 
+        // High Score
+        this.highScore = parseInt(localStorage.getItem('biche_highscore')) || 0;
+        this.updateHighScoreUI();
+
         // Speed system
         this.speedMultiplier = 1.0;
         this.gamesPlayedTotal = 0;
@@ -42,6 +50,7 @@ export class GameManager {
         this.preloadImages();
         this.preloadVoices();
         this.initLivesUI();
+        this.initTouchControls();
 
         this.loop = this.loop.bind(this);
         requestAnimationFrame(this.loop);
@@ -84,22 +93,14 @@ export class GameManager {
     }
 
     updateLivesUI() {
-        if (!this.uiHudLives) return;
-        const icons = this.uiHudLives.querySelectorAll('.hud-life');
-        icons.forEach((icon, index) => {
-            if (index >= this.lives) {
-                icon.classList.add('lost');
-            } else {
-                icon.classList.remove('lost');
-            }
-        });
-        
-        // Legacy support if needed
-        if (this.uiLives) {
-            const legacyIcons = this.uiLives.querySelectorAll('.life-icon');
-            legacyIcons.forEach((icon, index) => {
-                if (index >= this.lives) icon.classList.add('lost');
-            });
+        // Updated: Lives are only on transition screen lives-container
+        if (!this.uiLives) return;
+        this.uiLives.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+            const life = document.createElement('div');
+            life.classList.add('life-icon');
+            if (i >= this.lives) life.classList.add('lost');
+            this.uiLives.appendChild(life);
         }
     }
 
@@ -130,6 +131,7 @@ export class GameManager {
         }
 
         this.currentGame = new GameClass(this.canvas, this.ctx);
+        this.updateTouchControls(name);
         this.currentGame.speedMultiplier = this.speedMultiplier; // <-- apply speed
         this.currentGame.onGameEnd = (isWon) => this.handleGameEnd(isWon);
         this.currentGame.onShowInstruction = (text) => this.showInstruction(text);
@@ -165,6 +167,7 @@ export class GameManager {
     }
 
     startRandomLoop() {
+        this.unlockAudio();
         this.hideHomeScreen();
         this.isLooping = true;
         this.score = 0;
@@ -173,6 +176,70 @@ export class GameManager {
         this.initLivesUI();
         this.uiTransition.classList.remove('game-over');
         this.nextRandomGame();
+    }
+
+    unlockAudio() {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            if (!window.gameAudioContext) {
+                window.gameAudioContext = new AudioContextClass();
+            }
+            window.gameAudioContext.resume().catch(() => {});
+        }
+
+        if (!this.voiceAudio) return;
+
+        // Prime the reusable element from the iPad user's Start tap so later
+        // result voices can play during the game loop and transitions.
+        this.voiceAudio.src = this.winVoiceSrc;
+        this.voiceAudio.muted = true;
+        const playPromise = this.voiceAudio.play();
+        if (playPromise && playPromise.then) {
+            playPromise.then(() => {
+                this.voiceAudio.pause();
+                this.voiceAudio.currentTime = 0;
+                this.voiceAudio.muted = false;
+            }).catch(() => {
+                this.voiceAudio.muted = false;
+            });
+        }
+    }
+
+    initTouchControls() {
+        if (!this.uiTouchControls) return;
+
+        this.uiTouchControls.querySelectorAll('[data-control]').forEach(button => {
+            const control = button.dataset.control;
+            const release = (event) => {
+                event.preventDefault();
+                this.setVirtualControl(control, false);
+                button.classList.remove('pressed');
+            };
+            button.addEventListener('pointerdown', (event) => {
+                event.preventDefault();
+                this.setVirtualControl(control, true);
+                button.classList.add('pressed');
+            });
+            button.addEventListener('pointerup', release);
+            button.addEventListener('pointercancel', release);
+            button.addEventListener('pointerleave', release);
+        });
+    }
+
+    setVirtualControl(control, isPressed) {
+        if (this.currentGame && this.currentGame.setVirtualControl) {
+            this.currentGame.setVirtualControl(control, isPressed);
+        }
+    }
+
+    updateTouchControls(gameName) {
+        if (!this.uiTouchControls) return;
+        const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+        const showFlight = isTouchDevice && gameName === 'Helicobiche';
+        const showRunning = isTouchDevice && gameName === 'CourseBiche';
+        this.uiTouchControls.classList.toggle('visible', showFlight || showRunning);
+        this.uiFlightControls.classList.toggle('visible', showFlight);
+        this.uiRunningControls.classList.toggle('visible', showRunning);
     }
 
     nextRandomGame(prepareOnly = false) {
@@ -196,7 +263,7 @@ export class GameManager {
         this.hideInstruction();
 
         if (isWon) {
-            this.score++;
+            // Success!
         } else {
             this.lives--;
             // Shake the screen on loss
@@ -206,16 +273,17 @@ export class GameManager {
             }
         }
 
-        if (this.uiCurrentScore) this.uiCurrentScore.innerText = this.score;
+        // Score = Total games played
+        this.gamesPlayedTotal++;
+        this.score = this.gamesPlayedTotal;
         this.updateLivesUI();
 
-        // Speed progression: every 7 games
-        this.gamesPlayedTotal++;
+        // Speed progression: every 15 games
         let didSpeedUp = false;
-        const newTier = Math.floor(this.gamesPlayedTotal / 7);
+        const newTier = Math.floor(this.gamesPlayedTotal / 15);
         if (newTier > this.speedTier) {
             this.speedTier = newTier;
-            this.speedMultiplier = Math.min(this.speedMultiplier * 1.2, 1.5);
+            this.speedMultiplier = Math.min(this.speedMultiplier * 1.05, 1.5);
             didSpeedUp = true;
             console.log(`Speed up! multiplier=${this.speedMultiplier.toFixed(2)}`);
         }
@@ -244,7 +312,6 @@ export class GameManager {
         this.uiTransition.style.display = 'block';
         this.uiTransition.classList.add('speeding');
 
-        this.uiScore.innerText = this.score;
         this.updateLivesUI();
 
         // Prepare next game canvas early
@@ -254,9 +321,8 @@ export class GameManager {
             onPrepare();
         }
 
-        // Show Level Display right away
-        const currentLevel = this.gamesPlayedTotal + 1;
-        this.uiLevelDisplay.innerText = currentLevel;
+        // Show score (total games)
+        this.uiLevelDisplay.innerText = this.score;
         this.uiLevelDisplay.classList.add('center');
 
         // Show Speed Up if applicable right away
@@ -266,54 +332,15 @@ export class GameManager {
         void this.uiBiche.offsetWidth; // Trigger reflow
         this.uiBiche.classList.add('biche-running');
 
-        // Play the Win/Loss jingle immediately
-        let resultAudio;
-        if (isWon) {
-            resultAudio = new Audio('Son/Musique/transi_win.mp3');
-            resultAudio.volume = 0.5; // Lower music volume
-            resultAudio.playbackRate = this.speedMultiplier;
-            resultAudio.preservesPitch = false;
-        } else {
-            const loosePitch = Math.max(0.7, this.speedMultiplier * 0.85);
-            resultAudio = new Audio('Son/Musique/loose_transi.mp3');
-            resultAudio.volume = 0.5; // Lower music volume
-            resultAudio.playbackRate = loosePitch;
-            resultAudio.preservesPitch = false;
-        }
-        resultAudio.play().catch(e => console.warn('Transition result music failed:', e));
+        // Play the "BICHE !" sound at full volume
+        const bicheAudio = new Audio('Son/Voix/clear/Biche.mp3');
+        bicheAudio.volume = 1.0;
+        bicheAudio.play().catch(e => console.warn('Biche audio failed:', e));
 
-        // Start the main transi.mp3 audio exactly when the jingle is ending
-        const transiAudio = new Audio('Son/Musique/transi.mp3');
-        transiAudio.volume = 0.5; // Lower music volume
-        transiAudio.playbackRate = this.speedMultiplier;
-        transiAudio.preservesPitch = false;
+        // Shorter transition duration
+        const transiDuration = 1200;
 
-        const startTransi = () => {
-            if (transiAudio.hasStarted) return;
-            transiAudio.hasStarted = true;
-            transiAudio.play().catch(e => console.warn('transi.mp3 failed:', e));
-        };
-
-        // Use precise setTimeout based on duration to avoid timeupdate firing issues at high speeds
-        resultAudio.addEventListener('loadedmetadata', () => {
-            // duration is in seconds. We want 150ms overlap.
-            const overlapSec = 0.15;
-            const targetTime = Math.max(0, resultAudio.duration - overlapSec);
-            // Real time in MS = (Target time / speed) * 1000
-            const delayMs = (targetTime / resultAudio.playbackRate) * 1000;
-            setTimeout(startTransi, delayMs);
-        });
-
-        // Fallback safety to ensure it plays
-        resultAudio.addEventListener('ended', startTransi);
-        resultAudio.addEventListener('error', () => {
-            console.warn('Result audio failed, starting transi.mp3 after a delay.');
-            setTimeout(startTransi, 500);
-        }, { once: true });
-
-
-        // The transition length is strictly bound to the end of the transi.mp3 beating theme
-        transiAudio.addEventListener('ended', () => {
+        setTimeout(() => {
             if (!this.isTransitioning) return;
             this.uiTransition.style.display = 'none';
             this.uiTransition.classList.remove('speeding');
@@ -322,20 +349,7 @@ export class GameManager {
             this.uiLevelDisplay.classList.remove('center');
             this.isTransitioning = false;
             if (onStart) onStart();
-        }, { once: true });
-
-        // Fallback if audio fails to load/play
-        transiAudio.addEventListener('error', () => {
-            setTimeout(() => {
-                if (!this.isTransitioning) return;
-                this.uiTransition.style.display = 'none';
-                this.uiBiche.classList.remove('biche-running');
-                this.uiSpeedUp.classList.remove('visible');
-                this.uiLevelDisplay.classList.remove('center');
-                this.isTransitioning = false;
-                if (onStart) onStart();
-            }, 3000 / this.speedMultiplier);
-        }, { once: true });
+        }, transiDuration);
     }
 
     gameOver() {
@@ -374,6 +388,13 @@ export class GameManager {
             this.uiLeaderboard.appendChild(row);
         });
 
+        // Save high score if record broken
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            localStorage.setItem('biche_highscore', this.highScore);
+            this.updateHighScoreUI();
+        }
+
         // Increase delay before reload to let player see results
         setTimeout(() => {
             window.location.reload();
@@ -387,13 +408,11 @@ export class GameManager {
         }
         this.currentVoiceOutcome = isWon;
 
-        let src;
-        if (isWon) {
-            src = 'Son/Voix/clear/Biche.mp3';
-        } else {
-            const sounds = ['nice try.mp3', 'oh no.mp3', 'too bad.mp3'];
-            src = `Son/Voix/lost/${sounds[Math.floor(Math.random() * sounds.length)]}`;
-        }
+        // Skip manual win voice (Biche) as it plays in transition
+        if (isWon) return;
+
+        const sounds = ['nice try.mp3', 'oh no.mp3', 'too bad.mp3'];
+        const src = `Son/Voix/lost/${sounds[Math.floor(Math.random() * sounds.length)]}`;
 
         console.log(`GameManager: Playing result voice: ${src}`);
 
@@ -495,6 +514,12 @@ export class GameManager {
             setTimeout(() => {
                 this.uiHomeScreen.style.display = 'none';
             }, 500);
+        }
+    }
+
+    updateHighScoreUI() {
+        if (this.uiHighScoreValue) {
+            this.uiHighScoreValue.innerText = this.highScore;
         }
     }
 }

@@ -16,6 +16,31 @@ export class MiniGame {
         this.bombTimer = new BombTimer();
     }
 
+    /** Convert a pointer event into the game's fixed 800x600 coordinate space. */
+    getCanvasPoint(event) {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+            x: (event.clientX - rect.left) * (this.canvas.width / rect.width),
+            y: (event.clientY - rect.top) * (this.canvas.height / rect.height)
+        };
+    }
+
+    capturePointer(event) {
+        if (event.pointerId !== undefined && this.canvas.setPointerCapture) {
+            this.canvas.setPointerCapture(event.pointerId);
+        }
+    }
+
+    releasePointer(event) {
+        if (event.pointerId !== undefined && this.canvas.releasePointerCapture) {
+            try {
+                this.canvas.releasePointerCapture(event.pointerId);
+            } catch (error) {
+                // Safari may already have released the pointer.
+            }
+        }
+    }
+
     /**
      * Called when the game starts.
      */

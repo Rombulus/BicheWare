@@ -68,6 +68,12 @@ export class Helicobiche extends MiniGame {
         }
     }
 
+    setVirtualControl(control, isPressed) {
+        if (this.keys.hasOwnProperty(control)) {
+            this.keys[control] = isPressed;
+        }
+    }
+
     update(dt) {
         if (!this.isActive) return;
         super.update(dt);

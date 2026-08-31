@@ -43,31 +43,32 @@ export class Tournesol extends MiniGame {
         this.waterTime = 0;
         this.isWatering = false;
 
-        this.canvas.addEventListener('mousedown', this.handleDown);
-        window.addEventListener('mousemove', this.handleMove);
-        window.addEventListener('mouseup', this.handleUp);
+        this.canvas.addEventListener('pointerdown', this.handleDown);
+        window.addEventListener('pointermove', this.handleMove);
+        window.addEventListener('pointerup', this.handleUp);
+        window.addEventListener('pointercancel', this.handleUp);
     }
 
     handleDown(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const { x: mx, y: my } = this.getCanvasPoint(e);
 
         if (mx > this.canX && mx < this.canX + 150 && my > this.canY && my < this.canY + 150) {
             this.isDragging = true;
+            this.capturePointer(e);
         }
     }
 
     handleMove(e) {
         if (this.isDragging) {
-            const rect = this.canvas.getBoundingClientRect();
-            this.canX = e.clientX - rect.left - 75;
-            this.canY = e.clientY - rect.top - 75;
+            const { x, y } = this.getCanvasPoint(e);
+            this.canX = x - 75;
+            this.canY = y - 75;
         }
     }
 
-    handleUp() {
+    handleUp(e) {
         this.isDragging = false;
+        if (e) this.releasePointer(e);
     }
 
     update(dt) {
@@ -147,9 +148,10 @@ export class Tournesol extends MiniGame {
     }
 
     cleanup() {
-        this.canvas.removeEventListener('mousedown', this.handleDown);
-        window.removeEventListener('mousemove', this.handleMove);
-        window.removeEventListener('mouseup', this.handleUp);
+        this.canvas.removeEventListener('pointerdown', this.handleDown);
+        window.removeEventListener('pointermove', this.handleMove);
+        window.removeEventListener('pointerup', this.handleUp);
+        window.removeEventListener('pointercancel', this.handleUp);
     }
 
     getInstruction() {

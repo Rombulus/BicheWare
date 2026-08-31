@@ -37,8 +37,8 @@ export class Routine extends MiniGame {
         this.successCount = 0;
         this.pickZone();
 
-        window.addEventListener('mousemove', this.handleMove);
-        window.addEventListener('mousedown', this.handleClick);
+        window.addEventListener('pointermove', this.handleMove);
+        window.addEventListener('pointerdown', this.handleClick);
     }
 
     pickZone() {
@@ -49,9 +49,9 @@ export class Routine extends MiniGame {
     }
 
     handleMove(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        this.pipetteX = e.clientX - rect.left;
-        this.pipetteY = e.clientY - rect.top;
+        const { x, y } = this.getCanvasPoint(e);
+        this.pipetteX = x;
+        this.pipetteY = y;
         // Trail suppression: just logic updates position. Draw handles rendering.
         // User complained about remnants. This implies screen clear failure?
         // MiniGame.js had clear removed.
@@ -143,5 +143,11 @@ export class Routine extends MiniGame {
 
     getInstruction() {
         return "APPLIQUE !";
+    }
+
+    cleanup() {
+        super.cleanup();
+        window.removeEventListener('pointermove', this.handleMove);
+        window.removeEventListener('pointerdown', this.handleClick);
     }
 }
