@@ -63,6 +63,8 @@ export class GameManager {
 
     preloadVoices() {
         this.voiceAudio = new Audio();
+        this.voiceAudio.preload = 'auto';
+        this.voiceAudio.setAttribute('playsinline', '');
         this.voiceAudio.volume = 1.0; // Max volume for voices
         // Preload standard win voice
         this.winVoiceSrc = 'Son/Voix/clear/Biche.mp3';
@@ -342,9 +344,7 @@ export class GameManager {
         this.uiBiche.classList.add('biche-running');
 
         // Play the "BICHE !" sound at full volume
-        const bicheAudio = new Audio('Son/Voix/clear/Biche.mp3');
-        bicheAudio.volume = 1.0;
-        bicheAudio.play().catch(e => console.warn('Biche audio failed:', e));
+        this.playVoice(this.winVoiceSrc);
 
         // Shorter transition duration
         const transiDuration = 1200;
@@ -491,6 +491,22 @@ export class GameManager {
         this.uiLeaderboard.classList.remove('hidden');
     }
 
+    playVoice(src) {
+        if (!this.voiceAudio) return;
+
+        const audio = this.voiceAudio;
+        audio.pause();
+        audio.src = src;
+        audio.volume = 1.0;
+        audio.playbackRate = 1.0;
+        try {
+            audio.currentTime = 0;
+        } catch (error) {
+            // A newly assigned source may not be seekable until metadata loads.
+        }
+        audio.play().catch(error => console.warn(`Audio playback failed for ${src}:`, error));
+    }
+
     playGlobalVoice(isWon) {
         if (this.currentVoiceOutcome !== null) {
             console.log(`GameManager: Voice already triggered for this game (${this.currentVoiceOutcome})`);
@@ -498,37 +514,13 @@ export class GameManager {
         }
         this.currentVoiceOutcome = isWon;
 
-        // Skip manual win voice (Biche) as it plays in transition
+        // Winning transitions play the biche voice with the same unlocked player.
         if (isWon) return;
 
         const sounds = ['nice try.mp3', 'oh no.mp3', 'too bad.mp3'];
         const src = `Son/Voix/lost/${sounds[Math.floor(Math.random() * sounds.length)]}`;
-
-        console.log(`GameManager: Playing result voice: ${src}`);
-
-        try {
-            if (this.voiceAudio) {
-                this.voiceAudio.pause();
-                this.voiceAudio.src = src;
-                this.voiceAudio.volume = 1.0;
-                this.voiceAudio.playbackRate = 1.0; // Keep voice pitch normal
-                this.voiceAudio.play().then(() => {
-                    console.log(`GameManager: Voice playing successfully: ${src}`);
-                }).catch(e => {
-                    console.warn(`GameManager: Voice playback failed for ${src}:`, e);
-                });
-            } else {
-                // Fallback if preload failed for some reason
-                const audio = new Audio(src);
-                audio.volume = 0.7;
-                audio.playbackRate = 1.0; // Keep voice pitch normal
-                audio.play().catch(console.warn);
-            }
-        } catch (err) {
-            console.error("GameManager: Error in playGlobalVoice:", err);
-        }
+        this.playVoice(src);
     }
-
     showInstruction(text) {
         if (!text) return;
 

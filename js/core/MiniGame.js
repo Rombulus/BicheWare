@@ -54,29 +54,132 @@ export class MiniGame {
         this.bombTimer.StartTimer(this.timeLeft);
     }
 
-    /**
-     * Helper to play a sound and track it for cleanup.
-     */
+    /** Load and play sounds through the page's unlocked Web Audio context. */
     playSound(src, loop = false) {
-        const audio = new Audio(src);
-        audio.loop = loop;
-        audio.play().catch(e => console.warn("Audio play failed:", e));
-        this.activeSounds.push(audio);
-        return audio;
+        const context = window.gameAudioContext;
+        if (!context || typeof fetch !== 'function') {
+            const audio = new Audio(src);
+            audio.loop = loop;
+            audio.play().catch(error => console.warn('Audio play failed:', src, error));
+            this.activeSounds.push(audio);
+            return audio;
+        }
+
+        const sound = {
+            source: null,
+            buffer: null,
+            loop,
+            paused: false,
+            stopped: false,
+            offset: 0,
+            startedAt: 0
+        };
+
+        const beginPlayback = () => {
+            if (sound.stopped || sound.paused || !sound.buffer || sound.source) return;
+            if (context.state !== 'running') {
+                context.resume().then(beginPlayback).catch(error => {
+                    console.warn('Audio context resume failed:', error);
+                });
+                return;
+            }
+
+            const source = context.createBufferSource();
+            source.buffer = sound.buffer;
+            source.loop = sound.loop;
+            source.connect(context.destination);
+            sound.startedAt = context.currentTime;
+            sound.source = source;
+            source.onended = () => {
+                if (sound.source !== source) return;
+                sound.source = null;
+                if (!sound.loop) sound.stopped = true;
+            };
+
+            const duration = sound.buffer.duration;
+            const offset = sound.loop && duration > 0
+                ? sound.offset % duration
+                : sound.offset;
+            if (!sound.loop && offset >= duration) {
+                sound.stopped = true;
+                sound.source = null;
+                return;
+            }
+            source.start(0, offset);
+        };
+
+        const stopSource = () => {
+            if (!sound.source) return;
+            const source = sound.source;
+            sound.source = null;
+            source.onended = null;
+            try {
+                source.stop();
+            } catch (error) {
+                // The source may have ended between the state check and stop().
+            }
+        };
+
+        sound.pause = () => {
+            if (sound.stopped || sound.paused) return;
+            if (sound.source) {
+                const elapsed = Math.max(0, context.currentTime - sound.startedAt);
+                const duration = sound.buffer?.duration || 0;
+                sound.offset += elapsed;
+                if (sound.loop && duration > 0) sound.offset %= duration;
+                else if (duration > 0) sound.offset = Math.min(sound.offset, duration);
+                stopSource();
+            }
+            sound.paused = true;
+        };
+
+        sound.stop = () => {
+            sound.stopped = true;
+            sound.paused = false;
+            sound.offset = 0;
+            stopSource();
+        };
+
+        this.activeSounds.push(sound);
+
+        const cache = window.gameAudioBufferCache || (window.gameAudioBufferCache = new Map());
+        const audioUrl = new URL(src, document.baseURI).href;
+        let bufferPromise = cache.get(audioUrl);
+        if (!bufferPromise) {
+            bufferPromise = fetch(audioUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status} loading ${audioUrl}`);
+                    return response.arrayBuffer();
+                })
+                .then(data => context.decodeAudioData(data));
+            cache.set(audioUrl, bufferPromise);
+            bufferPromise.catch(() => cache.delete(audioUrl));
+        }
+
+        bufferPromise.then(buffer => {
+            sound.buffer = buffer;
+            beginPlayback();
+        }).catch(error => {
+            sound.stopped = true;
+            console.warn('Audio load failed:', audioUrl, error);
+        });
+
+        return sound;
     }
 
-    /**
-     * Stop all sounds tracked by this mini-game.
-     */
+    /** Stop every sound started by this mini-game. */
     stopAllSounds() {
-        this.activeSounds.forEach(audio => {
-            audio.pause();
-            audio.src = "";
-            audio.load();
+        this.activeSounds.forEach(sound => {
+            if (typeof sound.stop === 'function') {
+                sound.stop();
+                return;
+            }
+            sound.pause();
+            sound.src = '';
+            sound.load();
         });
         this.activeSounds = [];
     }
-
     update(dt) {
         if (!this.isActive) return;
 
