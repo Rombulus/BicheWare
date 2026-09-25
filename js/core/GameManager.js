@@ -444,6 +444,20 @@ export class GameManager {
     renderLeaderboard(currentRun) {
         if (!this.uiLeaderboard) return;
 
+        const fakeData = [
+            { id: 'fake-ours', name: 'Ours', score: 50 },
+            { id: 'fake-cerf', name: 'Cerf', score: 30 },
+            { id: 'fake-renard', name: 'Renard', score: 20 },
+            { id: 'fake-lapin', name: 'Lapin', score: 15 },
+            { id: 'fake-mulot', name: 'Mulot', score: 5 }
+        ];
+        const playerEntries = [...this.leaderboardEntries];
+        if (currentRun && !playerEntries.some(entry => entry.id === currentRun.id)) {
+            playerEntries.push(currentRun);
+        }
+        const leaderboard = [...fakeData, ...playerEntries]
+            .sort((a, b) => b.score - a.score);
+
         this.uiLeaderboard.replaceChildren();
         const title = document.createElement('h2');
         title.textContent = 'TOP BICHES';
@@ -454,9 +468,9 @@ export class GameManager {
         finalScore.textContent = `SCORE DE LA PARTIE : ${this.score}`;
         this.uiLeaderboard.appendChild(finalScore);
 
-        this.leaderboardEntries.slice(0, 6).forEach((entry, index) => {
+        leaderboard.forEach((entry, index) => {
             const row = document.createElement('div');
-            row.className = 'leaderboard-entry' + (entry.id === currentRun.id ? ' player-row' : '');
+            row.className = 'leaderboard-entry' + (entry.id === currentRun?.id ? ' player-row' : '');
 
             const rank = document.createElement('span');
             rank.className = 'rank';
