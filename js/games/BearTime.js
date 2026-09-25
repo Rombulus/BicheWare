@@ -38,7 +38,7 @@ export class BearTime extends MiniGame {
         window.addEventListener('pointerdown', this.handleClick);
         window.addEventListener('pointermove', this.handleMove);
         window.addEventListener('keydown', this.handleKey);
-        this.playSound('Son/SFX/Beartime/soundtrack.mp3', true);
+        this.playSound('Son/SFX/BearTime/soundtrack.mp3', true);
     }
 
     handleMove(e) {
@@ -85,7 +85,7 @@ export class BearTime extends MiniGame {
             this.winTriggered = true;
             this.triggerResultVoice(true);
             this.stopAllSounds(); // Stop soundtrack on win
-            this.playSound('Son/SFX/Beartime/check.wav');
+            this.playSound('Son/SFX/BearTime/check.wav');
             this.win();
         }
     }
