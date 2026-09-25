@@ -1,6 +1,6 @@
 {
-  "name": "Le jeu de la biche",
-  "short_name": "Jeu de la biche",
+  "name": "le jeu de la biche",
+  "short_name": "le jeu de la biche",
   "lang": "fr-FR",
   "start_url": "./",
   "display": "fullscreen",
@@ -9,8 +9,8 @@
   "theme_color": "#1a102d",
   "icons": [
     {
-      "src": "Images/icone%20biche.png",
-      "sizes": "192x192",
+      "src": "Images/disco_biche_icon.png",
+      "sizes": "1254x1254",
       "type": "image/png"
     }
   ]
