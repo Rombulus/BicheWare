@@ -34,12 +34,17 @@ export class GameManager {
         this.playedGames = new Set();
         this.isLooping = false;
         this.score = 0;
+        this.isGameOver = false;
         this.lives = 4;
         this.isTransitioning = false;
         this.currentVoiceOutcome = null;
 
         // High Score
-        this.highScore = parseInt(localStorage.getItem('biche_highscore')) || 0;
+        this.highScore = this.loadHighScore();
+        this.leaderboardEntries = this.loadLeaderboard();
+        if (this.leaderboardEntries.length === 0 && this.highScore > 0) {
+            this.leaderboardEntries.push({ id: 'previous-record', name: 'Mattéa', score: this.highScore, date: '' });
+        }
         this.updateHighScoreUI();
 
         // Speed system
@@ -171,6 +176,10 @@ export class GameManager {
         this.hideHomeScreen();
         this.isLooping = true;
         this.score = 0;
+        this.gamesPlayedTotal = 0;
+        this.speedMultiplier = 1.0;
+        this.speedTier = 0;
+        this.isGameOver = false;
         this.lives = 4;
         this.playedGames.clear();
         this.initLivesUI();
@@ -353,52 +362,119 @@ export class GameManager {
     }
 
     gameOver() {
+        if (this.isGameOver) return;
+        this.isGameOver = true;
         this.isLooping = false;
-        this.uiTransition.style.display = 'block';
-        this.uiTransition.classList.add('game-over');
-        this.uiScore.innerText = this.score;
-        this.updateLivesUI();
 
-        // Show leaderboard
-        const fakeData = [
-            { name: "Ours", score: 50 },
-            { name: "Cerf", score: 30 },
-            { name: "Renard", score: 20 },
-            { name: "Lapin", score: 15 },
-            { name: "Mulot", score: 5 }
-        ];
+        // Save before touching optional end-screen elements: the iPad layout
+        // no longer includes #score-display.
+        const currentRun = this.saveCompletedRun();
 
-        // Insert Mattéa
-        const playerName = "Mattéa";
-        const leaderboard = [...fakeData, { name: playerName, score: this.score, isPlayer: true }];
-        leaderboard.sort((a, b) => b.score - a.score);
-
-        // Render leaderboard
-        this.uiLeaderboard.innerHTML = '<h2>TOP BICHES</h2>';
-        this.uiLeaderboard.classList.remove('hidden');
-
-        leaderboard.slice(0, 6).forEach((entry, index) => {
-            const row = document.createElement('div');
-            row.className = 'leaderboard-entry' + (entry.isPlayer ? ' player-row' : '');
-            row.innerHTML = `
-                <span class="rank">${index + 1}</span>
-                <span class="name">${entry.name}</span>
-                <span class="score">${entry.score}</span>
-            `;
-            this.uiLeaderboard.appendChild(row);
-        });
-
-        // Save high score if record broken
-        if (this.score > this.highScore) {
-            this.highScore = this.score;
-            localStorage.setItem('biche_highscore', this.highScore);
-            this.updateHighScoreUI();
+        if (this.uiTransition) {
+            this.uiTransition.style.display = 'block';
+            this.uiTransition.classList.add('game-over');
         }
+        if (this.uiScore) this.uiScore.innerText = this.score;
+        this.updateLivesUI();
+        this.renderLeaderboard(currentRun);
 
-        // Increase delay before reload to let player see results
+        // Keep the final score visible long enough to read the leaderboard.
         setTimeout(() => {
             window.location.reload();
         }, 10000);
+    }
+
+    loadHighScore() {
+        try {
+            const storedScores = ['biche_highscore', 'biche-ware-pb']
+                .map(key => Number.parseInt(window.localStorage.getItem(key), 10))
+                .filter(score => Number.isFinite(score) && score >= 0);
+            return storedScores.length ? Math.max(...storedScores) : 0;
+        } catch (error) {
+            console.warn('Could not read saved high score:', error);
+            return 0;
+        }
+    }
+
+    loadLeaderboard() {
+        try {
+            const saved = JSON.parse(window.localStorage.getItem('biche_leaderboard') || '[]');
+            if (!Array.isArray(saved)) return [];
+
+            return saved
+                .filter(entry => entry && Number.isFinite(Number(entry.score)) && Number(entry.score) >= 0)
+                .map(entry => ({
+                    id: String(entry.id || ''),
+                    name: String(entry.name || 'Mattéa').slice(0, 24),
+                    score: Math.floor(Number(entry.score)),
+                    date: typeof entry.date === 'string' ? entry.date : ''
+                }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 10);
+        } catch (error) {
+            console.warn('Could not read saved leaderboard:', error);
+            return [];
+        }
+    }
+
+    saveCompletedRun() {
+        const entry = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            name: 'Mattéa',
+            score: Math.max(0, Math.floor(Number(this.score) || 0)),
+            date: new Date().toISOString()
+        };
+
+        this.leaderboardEntries = [...this.leaderboardEntries, entry]
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 10);
+        this.highScore = Math.max(this.highScore, entry.score);
+
+        try {
+            window.localStorage.setItem('biche_highscore', String(this.highScore));
+            window.localStorage.setItem('biche_leaderboard', JSON.stringify(this.leaderboardEntries));
+        } catch (error) {
+            console.warn('Could not save game records:', error);
+        }
+
+        this.updateHighScoreUI();
+        return entry;
+    }
+
+    renderLeaderboard(currentRun) {
+        if (!this.uiLeaderboard) return;
+
+        this.uiLeaderboard.replaceChildren();
+        const title = document.createElement('h2');
+        title.textContent = 'TOP BICHES';
+        this.uiLeaderboard.appendChild(title);
+
+        const finalScore = document.createElement('p');
+        finalScore.className = 'leaderboard-current-score';
+        finalScore.textContent = `SCORE DE LA PARTIE : ${this.score}`;
+        this.uiLeaderboard.appendChild(finalScore);
+
+        this.leaderboardEntries.slice(0, 6).forEach((entry, index) => {
+            const row = document.createElement('div');
+            row.className = 'leaderboard-entry' + (entry.id === currentRun.id ? ' player-row' : '');
+
+            const rank = document.createElement('span');
+            rank.className = 'rank';
+            rank.textContent = String(index + 1);
+
+            const name = document.createElement('span');
+            name.className = 'name';
+            name.textContent = entry.name;
+
+            const score = document.createElement('span');
+            score.className = 'score';
+            score.textContent = String(entry.score);
+
+            row.append(rank, name, score);
+            this.uiLeaderboard.appendChild(row);
+        });
+
+        this.uiLeaderboard.classList.remove('hidden');
     }
 
     playGlobalVoice(isWon) {
