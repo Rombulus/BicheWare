@@ -344,7 +344,7 @@ export class GameManager {
         this.uiBiche.classList.add('biche-running');
 
         // Play the "BICHE !" sound at full volume
-        this.playVoice(this.winVoiceSrc);
+        if (isWon) this.playVoice(this.winVoiceSrc);
 
         // Shorter transition duration
         const transiDuration = 1200;
