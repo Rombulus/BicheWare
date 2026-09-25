@@ -1,19 +1,15 @@
 #transition-screen {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 800px;
-    height: 600px;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: none;
+    aspect-ratio: auto;
     background-color: #f1c40f;
     display: none;
     z-index: 2000;
     overflow: hidden;
     border: 4px solid #fff;
-    width: min(800px, calc(100vw - 24px));
-    height: min(600px, calc((100vw - 24px) * 0.75), calc(100dvh - 24px));
-    max-height: calc(100dvh - 24px);
-    aspect-ratio: 4 / 3;
 }
 
 #transition-bg {
@@ -41,10 +37,10 @@
 
 #biche-runner {
     position: absolute;
-    bottom: 100px;
-    left: -200px;
-    width: 200px;
-    height: 200px;
+    bottom: 16.667%;
+    left: -25%;
+    width: 25%;
+    height: 33.333%;
     background-image: url('../Images/Course/running_biche.png');
     background-size: contain;
     background-repeat: no-repeat;
@@ -57,16 +53,16 @@
 
 @keyframes biche-run {
     0% {
-        left: -200px;
+        left: -25%;
     }
 
     50% {
-        left: 300px;
+        left: 37.5%;
         transform: scale(1.2) rotate(10deg);
     }
 
     100% {
-        left: 900px;
+        left: 112.5%;
     }
 }
 
